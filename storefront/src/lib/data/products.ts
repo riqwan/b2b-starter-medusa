@@ -1,5 +1,3 @@
-"use server"
-
 import { sdk } from "@/lib/config"
 import { getAuthHeaders, getCacheOptions } from "@/lib/data/cookies"
 import { getRegion } from "@/lib/data/regions"
@@ -10,9 +8,11 @@ import { HttpTypes } from "@medusajs/types"
 export const getProductsById = async ({
   ids,
   regionId,
+  countryCode, // Add countryCode here
 }: {
   ids: string[]
   regionId: string
+  countryCode: string // Add countryCode type here
 }) => {
   const headers = {
     ...(await getAuthHeaders()),
@@ -29,6 +29,7 @@ export const getProductsById = async ({
       query: {
         id: ids,
         region_id: regionId,
+        country_code: countryCode, // Pass country_code here
         fields:
           "*variants,*variants.calculated_price,*variants.inventory_quantity",
       },
@@ -108,6 +109,7 @@ export const listProducts = async ({
           limit,
           offset,
           region_id: region.id,
+          country_code: countryCode, // Pass country_code here as well for consistency
           fields: "*variants.calculated_price",
           ...queryParams,
         },

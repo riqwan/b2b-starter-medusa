@@ -37,7 +37,12 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
           <Suspense
             fallback={<ProductActions product={product} region={region} />}
           >
-            <ProductActionsWrapper id={product.id} region={region} />
+            {/* Pass countryCode to ProductActionsWrapper */}
+            <ProductActionsWrapper
+              id={product.id}
+              region={region}
+              countryCode={countryCode}
+            />
           </Suspense>
           <ProductFacts product={product} />
         </div>
