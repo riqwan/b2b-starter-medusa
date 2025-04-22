@@ -1,3 +1,4 @@
+import { useTax } from "@/lib/context/tax-context" // Import useTax
 import { addToCartEventBus } from "@/lib/data/cart-event-bus"
 import { getProductPrice } from "@/lib/util/get-product-price"
 import { HttpTypes, StoreProduct, StoreProductVariant } from "@medusajs/types"
@@ -14,6 +15,7 @@ const ProductVariantsTable = ({
   product: HttpTypes.StoreProduct
   region: HttpTypes.StoreRegion
 }) => {
+  const { includeTax } = useTax() // Use the tax context
   const [isAdding, setIsAdding] = useState(false)
   const [lineItemsMap, setLineItemsMap] = useState<
     Map<
@@ -88,8 +90,9 @@ const ProductVariantsTable = ({
                   </Table.HeaderCell>
                 )
               })}
+              {/* Update Price Header based on toggle */}
               <Table.HeaderCell className="px-4 border-x">
-                Price
+                Price {includeTax ? "(Inc. Tax)" : "(Excl. Tax)"}
               </Table.HeaderCell>
               <Table.HeaderCell className="px-4">Quantity</Table.HeaderCell>
             </Table.Row>
@@ -100,6 +103,13 @@ const ProductVariantsTable = ({
                 product,
                 variantId: variant.id,
               })
+
+              // Select the correct price string based on the toggle
+              const displayPrice = variantPrice
+                ? includeTax
+                  ? variantPrice.calculated_price_with_tax
+                  : variantPrice.calculated_price
+                : "N/A" // Fallback if price couldn't be calculated
 
               return (
                 <Table.Row
@@ -119,8 +129,9 @@ const ProductVariantsTable = ({
                       </Table.Cell>
                     )
                   })}
+                  {/* Render the selected price */}
                   <Table.Cell className="px-4 border-x">
-                    {variantPrice?.calculated_price}
+                    {displayPrice}
                   </Table.Cell>
                   <Table.Cell className="pl-1 !pr-1">
                     <BulkTableQuantity
