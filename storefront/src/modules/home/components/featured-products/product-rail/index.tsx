@@ -18,9 +18,21 @@ export default async function ProductRail({
     return null
   }
 
+  // Assuming the first country in the region is the target countryCode
+  const countryCode = region.countries?.[0]?.iso_2
+
+  if (!countryCode) {
+    // Handle case where region has no countries or countryCode is missing
+    console.warn(
+      `Region ${region.id} has no countries or country code, cannot fetch products for ProductRail.`
+    )
+    return null
+  }
+
   const productsWithPrices = await getProductsById({
     ids: products.map((p) => p.id!),
     regionId: region.id,
+    countryCode: countryCode, // Pass countryCode
   })
 
   return (

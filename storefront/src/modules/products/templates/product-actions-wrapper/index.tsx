@@ -8,18 +8,21 @@ import ProductActions from "@/modules/products/components/product-actions"
 export default async function ProductActionsWrapper({
   id,
   region,
+  countryCode, // Add countryCode prop
 }: {
   id: string
   region: HttpTypes.StoreRegion
+  countryCode: string // Add countryCode prop type
 }) {
-  const [product] = await getProductsById({
+  const products = await getProductsById({
     ids: [id],
     regionId: region.id,
+    countryCode: countryCode, // Pass countryCode
   })
 
-  if (!product) {
+  if (!products || products.length === 0) {
     return null
   }
 
-  return <ProductActions product={product} region={region} />
+  return <ProductActions product={products[0]} region={region} />
 }

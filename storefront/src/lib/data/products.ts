@@ -10,9 +10,11 @@ import { HttpTypes } from "@medusajs/types"
 export const getProductsById = async ({
   ids,
   regionId,
+  countryCode,
 }: {
   ids: string[]
   regionId: string
+  countryCode: string
 }) => {
   const headers = {
     ...(await getAuthHeaders()),
@@ -29,6 +31,7 @@ export const getProductsById = async ({
       query: {
         id: ids,
         region_id: regionId,
+        country_code: countryCode, // Added country_code
         fields:
           "*variants,*variants.calculated_price,*variants.inventory_quantity",
       },
@@ -39,7 +42,11 @@ export const getProductsById = async ({
     .then(({ products }) => products)
 }
 
-export const getProductByHandle = async (handle: string, regionId: string) => {
+export const getProductByHandle = async (
+  handle: string,
+  regionId: string,
+  countryCode: string
+) => {
   const headers = {
     ...(await getAuthHeaders()),
   }
@@ -55,6 +62,7 @@ export const getProductByHandle = async (handle: string, regionId: string) => {
       query: {
         handle,
         region_id: regionId,
+        country_code: countryCode, // Added country_code
         fields:
           "*variants.calculated_price,+variants.inventory_quantity,+metadata,+tags",
       },
@@ -108,6 +116,7 @@ export const listProducts = async ({
           limit,
           offset,
           region_id: region.id,
+          country_code: countryCode, // Added country_code here as well for consistency
           fields: "*variants.calculated_price",
           ...queryParams,
         },

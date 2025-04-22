@@ -48,14 +48,15 @@ export async function generateStaticParams() {
 
 export async function generateMetadata(props: Props): Promise<Metadata> {
   const params = await props.params
-  const { handle } = params
+  const { handle, countryCode } = params // Destructure countryCode
   const region = await getRegion(params.countryCode)
 
   if (!region) {
     notFound()
   }
 
-  const product = await getProductByHandle(handle, region.id)
+  // Pass countryCode to getProductByHandle
+  const product = await getProductByHandle(handle, region.id, countryCode)
 
   if (!product) {
     notFound()
@@ -80,7 +81,12 @@ export default async function ProductPage(props: Props) {
     notFound()
   }
 
-  const pricedProduct = await getProductByHandle(params.handle, region.id)
+  // Pass countryCode to getProductByHandle
+  const pricedProduct = await getProductByHandle(
+    params.handle,
+    region.id,
+    params.countryCode
+  )
   if (!pricedProduct) {
     notFound()
   }
