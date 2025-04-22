@@ -4,8 +4,7 @@ import Hero from "@/modules/home/components/hero"
 import SkeletonFeaturedProducts from "@/modules/skeletons/templates/skeleton-featured-products"
 import { Metadata } from "next"
 import { Suspense } from "react"
-
-export const dynamicParams = true
+import { listCollections } from "@/lib/data/collections"
 
 export const metadata: Metadata = {
   title: "Medusa Next.js Starter Template",
@@ -14,14 +13,11 @@ export const metadata: Metadata = {
 }
 
 export async function generateStaticParams() {
-  const countryCodes = await listRegions().then(
-    (regions) =>
-      regions
-        ?.map((r) => r.countries?.map((c) => c.iso_2))
-        .flat()
-        .filter(Boolean) as string[]
+  const countryCodes = await listRegions().then((regions) =>
+    regions?.map((r) => r.countries?.map((c) => c.iso_2)).flat()
   )
-  return countryCodes.map((countryCode) => ({ countryCode }))
+
+  return countryCodes?.map((countryCode) => ({ countryCode }))
 }
 
 export default async function Home(props: {
@@ -31,12 +27,32 @@ export default async function Home(props: {
 
   const { countryCode } = params
 
+  const region = await listRegions().then((regions) =>
+    regions?.find((r) =>
+      r.countries?.map((c) => c.iso_2).includes(countryCode)
+    )
+  )
+
+  const { collections } = await listCollections({
+    fields: "id, handle, title",
+  })
+
+  if (!collections || !region) {
+    return null
+  }
+
   return (
-    <div className="flex flex-col gap-y-2 m-2">
+    <>
       <Hero />
-      <Suspense fallback={<SkeletonFeaturedProducts />}>
-        <FeaturedProducts countryCode={countryCode} />
-      </Suspense>
-    </div>
+      <div className="py-12">
+        <ul className="flex flex-col gap-x-6" data-testid="featured-products">
+          <FeaturedProducts
+            collections={collections}
+            region={region}
+            countryCode={countryCode}
+          />
+        </ul>
+      </div>
+    </>
   )
 }
