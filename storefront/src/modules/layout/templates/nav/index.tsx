@@ -1,3 +1,5 @@
+"use client" // Add this directive for client components
+
 import AccountButton from "@/modules/account/components/account-button"
 import CartButton from "@/modules/cart/components/cart-button"
 import LocalizedClientLink from "@/modules/common/components/localized-client-link"
@@ -10,10 +12,11 @@ import SkeletonCartButton from "@/modules/skeletons/components/skeleton-cart-but
 import SkeletonMegaMenu from "@/modules/skeletons/components/skeleton-mega-menu"
 import { Suspense } from "react"
 import { Switch, Label } from "@medusajs/ui"
-import useTaxToggle from "@/lib/hooks/use-tax-toggle"
+import { useTax } from "@/lib/context/tax-context" // Import useTax from context
 
 function TaxToggleSwitch() {
-  const { showTaxes, toggleTaxView } = useTaxToggle()
+  // Use the context hook
+  const { showTaxes, toggleTaxView } = useTax()
 
   return (
     <div className="flex items-center gap-x-2">

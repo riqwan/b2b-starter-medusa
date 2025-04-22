@@ -1,7 +1,9 @@
+"use client" // Add this directive for client components
+
 import { convertToLocale } from "@/lib/util/money"
 import { HttpTypes } from "@medusajs/types"
 import { clx, Text } from "@medusajs/ui"
-import useTaxToggle from "@/lib/hooks/use-tax-toggle"
+import { useTax } from "@/lib/context/tax-context" // Import useTax from context
 
 type LineItemPriceProps = {
   item: HttpTypes.StoreCartLineItem | HttpTypes.StoreOrderLineItem
@@ -16,7 +18,8 @@ const LineItemPrice = ({
   className,
   currencyCode,
 }: LineItemPriceProps) => {
-  const { showTaxes } = useTaxToggle()
+  // Use the context hook
+  const { showTaxes } = useTax()
 
   // Determine the price to display based on the toggle
   const displayPriceAmount = showTaxes ? item.total : item.subtotal

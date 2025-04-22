@@ -5,12 +5,13 @@ import Divider from "@/modules/common/components/divider"
 import { B2BCart, B2BOrder } from "@/types"
 import { Text } from "@medusajs/ui"
 import React from "react"
-import useTaxToggle from "@/lib/hooks/use-tax-toggle"
+import { useTax } from "@/lib/context/tax-context" // Import useTax from context
 
 const CheckoutTotals: React.FC<{
   cartOrOrder: B2BCart | B2BOrder
 }> = ({ cartOrOrder }) => {
-  const { showTaxes } = useTaxToggle()
+  // Use the context hook
+  const { showTaxes } = useTax()
 
   if (!cartOrOrder) return null
 

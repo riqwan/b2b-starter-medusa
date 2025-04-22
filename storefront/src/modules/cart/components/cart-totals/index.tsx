@@ -5,11 +5,12 @@ import { convertToLocale } from "@/lib/util/money"
 import Divider from "@/modules/common/components/divider"
 import { Text } from "@medusajs/ui"
 import React from "react"
-import useTaxToggle from "@/lib/hooks/use-tax-toggle"
+import { useTax } from "@/lib/context/tax-context" // Import useTax from context
 
 const CartTotals: React.FC = () => {
   const { isUpdatingCart, cart } = useCart()
-  const { showTaxes } = useTaxToggle()
+  // Use the context hook
+  const { showTaxes } = useTax()
 
   if (!cart) return null
 

@@ -1,7 +1,9 @@
+"use client" // Add this directive for client components
+
 import { clx, Text } from "@medusajs/ui"
 import { getProductPrice } from "@/lib/util/get-product-price"
 import { HttpTypes } from "@medusajs/types"
-import useTaxToggle from "@/lib/hooks/use-tax-toggle"
+import { useTax } from "@/lib/context/tax-context" // Import useTax from context
 import { convertToLocale } from "@/lib/util/money"
 
 export default function ProductPrice({
@@ -12,7 +14,8 @@ export default function ProductPrice({
   const { cheapestPrice } = getProductPrice({
     product,
   })
-  const { showTaxes } = useTaxToggle()
+  // Use the context hook
+  const { showTaxes } = useTax()
 
   if (!cheapestPrice) {
     return <div className="block w-32 h-9 bg-gray-100 animate-pulse" />
