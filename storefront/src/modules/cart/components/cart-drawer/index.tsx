@@ -1,6 +1,7 @@
 "use client"
 
 import { useCart } from "@/lib/context/cart-context"
+import { useTax } from "@/lib/context/tax-context" // Import useTax
 import { checkSpendingLimit } from "@/lib/util/check-spending-limit"
 import { getCheckoutStep } from "@/lib/util/get-checkout-step"
 import { convertToLocale } from "@/lib/util/money"
@@ -37,6 +38,7 @@ const CartDrawer = ({
   const close = () => setIsOpen(false)
 
   const { cart } = useCart()
+  const { includeTax } = useTax() // Use the tax context
 
   const items = cart?.items || []
   const promotions = cart?.promotions || []
@@ -46,7 +48,13 @@ const CartDrawer = ({
       return acc + item.quantity
     }, 0) || 0
 
-  const subtotal = useMemo(() => cart?.item_subtotal ?? 0, [cart])
+  // Determine the amount and label to display based on the toggle
+  const displayAmount = useMemo(() => {
+    if (!cart) return 0
+    return includeTax ? cart.total : cart.subtotal
+  }, [cart, includeTax])
+
+  const displayLabel = includeTax ? "Total" : "Subtotal"
 
   const spendLimitExceeded = useMemo(
     () => checkSpendingLimit(cart, customer),
@@ -126,9 +134,10 @@ const CartDrawer = ({
           <button className="transition-fg relative inline-flex w-fit items-center justify-center overflow-hidden outline-none txt-compact-small-plus gap-x-1.5 px-3 py-1.5 rounded-full hover:bg-neutral-100">
             <ShoppingBag />
             <span className="text-sm font-normal hidden small:inline-block">
+              {/* Update Cart Button Text based on toggle */}
               {cart && items && items.length > 0
                 ? convertToLocale({
-                    amount: subtotal,
+                    amount: displayAmount ?? 0,
                     currency_code: cart.currency_code,
                   })
                 : "Cart"}
@@ -175,11 +184,12 @@ const CartDrawer = ({
                       freeShippingPrices={freeShippingPrices}
                     />
                   )}
+                  {/* Update Drawer Content Total based on toggle */}
                   <div className="flex justify-between">
-                    <Text>Subtotal</Text>
+                    <Text>{displayLabel}</Text>
                     <Text>
                       {convertToLocale({
-                        amount: subtotal,
+                        amount: displayAmount ?? 0,
                         currency_code: cart?.currency_code,
                       })}
                     </Text>
