@@ -22,13 +22,9 @@ const OrderSummary = ({ order }: OrderSummaryProps) => {
     })
   }
 
-  // Determine the final total to display based on the toggle
-  const displayTotal = includeTax
-    ? order.total
-    : (order.subtotal ?? 0) +
-      (order.shipping_total ?? 0) -
-      (order.discount_total ?? 0) -
-      (order.gift_card_total ?? 0)
+  // Determine the final total and label to display based on the toggle
+  const displayTotalAmount = includeTax ? order.total : order.subtotal
+  const displayTotalLabel = includeTax ? "Total (Inc. Tax)" : "Subtotal (Excl. Tax)"
 
   return (
     <div>
@@ -37,8 +33,8 @@ const OrderSummary = ({ order }: OrderSummaryProps) => {
         <div className="flex flex-col gap-y-1">
           {/* Keep these breakdowns as they are */}
           <div className="flex items-center justify-between">
-            <span>Subtotal</span>
-            <span>{getAmount(order.subtotal)}</span>
+            <span>Item Subtotal (excl. taxes)</span>
+            <span>{getAmount(order.item_subtotal)}</span>
           </div>
 
           {order.discount_total > 0 && (
@@ -58,10 +54,9 @@ const OrderSummary = ({ order }: OrderSummaryProps) => {
         </div>
         <div className="h-px w-full border-b border-gray-200 border-dashed my-4" />
         <div className="flex items-center justify-between text-base-regular text-ui-fg-base mb-2">
-          {/* Adjust the label based on the toggle */}
-          <span>Total {includeTax ? "(Inc. Tax)" : "(Excl. Tax)"}</span>
-          {/* Display the calculated total based on the toggle */}
-          <span>{getAmount(displayTotal)}</span>
+          {/* Adjust the label and value based on the toggle */}
+          <span>{displayTotalLabel}</span>
+          <span>{getAmount(displayTotalAmount)}</span>
         </div>
       </div>
     </div>

@@ -20,20 +20,22 @@ const LineItemPrice = ({
 }: LineItemPriceProps) => {
   const { includeTax } = useTax()
 
-  const adjustmentsSum = (item.adjustments || []).reduce(
-    (acc, adjustment) => adjustment.amount + acc,
+  // Use total for tax-inclusive, subtotal for tax-exclusive line item price
+  const displayAmount = (includeTax ? item.total : item.subtotal) ?? 0
+  const displayAmountPerItem = displayAmount / item.quantity
+
+  // Original price logic might need refinement depending on how discounts interact with tax
+  // Let's assume original_total is tax-inclusive and original_subtotal is tax-exclusive
+  const originalAmount = (includeTax ? item.original_total : item.original_subtotal) ?? 0
+  const originalAmountPerItem = originalAmount / item.quantity
+
+  const hasReducedPrice = displayAmountPerItem < originalAmountPerItem
+
+  // Calculate adjustments per item if needed, assuming adjustments apply pre-tax
+  const adjustmentsSumPerItem = (item.adjustments || []).reduce(
+    (acc, adjustment) => acc + adjustment.amount / item.quantity,
     0
   )
-
-  // Use total for tax-inclusive, subtotal for tax-exclusive
-  const displayAmount = includeTax ? item.total : item.subtotal
-
-  // Original price calculation might need adjustment based on tax setting if applicable
-  // For now, keep original price logic as is, assuming it's typically shown pre-tax
-  const originalPrice = item.original_total ?? 0 / item.quantity
-  const currentPrice = displayAmount ?? 0 / item.quantity - adjustmentsSum
-
-  const hasReducedPrice = currentPrice < originalPrice && includeTax // Only show strikethrough if tax is included and price reduced
 
   return (
     <Text
@@ -50,25 +52,25 @@ const LineItemPrice = ({
               data-testid="product-original-price"
             >
               {convertToLocale({
-                amount: originalPrice,
+                amount: originalAmountPerItem,
                 currency_code: currencyCode ?? "eur",
               })}
             </span>
-
-            {style === "default" && (
+            {/* Displaying discount amount might be complex with tax toggle, omitting for now */}
+            {/* {style === "default" && (
               <span className="text-base-regular text-ui-fg-interactive">
                 -
                 {convertToLocale({
-                  amount: adjustmentsSum,
+                  amount: adjustmentsSumPerItem,
                   currency_code: currencyCode ?? "eur",
                 })}
               </span>
-            )}
+            )} */}
           </>
         )}
         <span className="text-base-regular" data-testid="product-price">
           {convertToLocale({
-            amount: currentPrice,
+            amount: displayAmountPerItem,
             currency_code: currencyCode ?? "eur",
           })}
         </span>

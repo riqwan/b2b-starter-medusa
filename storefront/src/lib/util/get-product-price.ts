@@ -2,39 +2,63 @@ import { HttpTypes } from "@medusajs/types"
 import { getPercentageDiff } from "./get-precentage-diff"
 import { convertToLocale } from "./money"
 
-// TODO: Remove this util and use the AdminPrice type directly
+// Updated VariantPrice type to include tax fields
 export type VariantPrice = {
-  calculated_price_number: string
-  calculated_price: string
-  original_price_number: string
-  original_price: string
+  calculated_price_number: number // Price excluding tax
+  calculated_price: string // Formatted price excluding tax
+  calculated_price_with_tax_number: number // Price including tax
+  calculated_price_with_tax: string // Formatted price including tax
+  original_price_number: number // Original price excluding tax
+  original_price: string // Formatted original price excluding tax
+  original_price_with_tax_number: number // Original price including tax
+  original_price_with_tax: string // Formatted original price including tax
   currency_code: string
   price_type: string
   percentage_diff: string
 }
 
-export const getPricesForVariant = (variant: any): VariantPrice | null => {
-  if (!variant?.calculated_price?.calculated_amount) {
+// Updated function to extract tax fields
+export const getPricesForVariant = (
+  variant: HttpTypes.StoreProductVariant
+): VariantPrice | null => {
+  const calculatedPriceObject = variant?.calculated_price
+
+  if (!calculatedPriceObject?.calculated_amount) {
     return null
   }
 
+  const calculatedAmount = calculatedPriceObject.calculated_amount
+  const calculatedAmountWithTax =
+    calculatedPriceObject.calculated_amount_with_tax ?? calculatedAmount // Fallback if not present
+  const originalAmount = calculatedPriceObject.original_amount
+  const originalAmountWithTax =
+    calculatedPriceObject.original_amount_with_tax ?? originalAmount // Fallback if not present
+  const currencyCode = calculatedPriceObject.currency_code
+
   return {
-    calculated_price_number: variant.calculated_price.calculated_amount,
+    calculated_price_number: calculatedAmount,
     calculated_price: convertToLocale({
-      amount: variant.calculated_price.calculated_amount,
-      currency_code: variant.calculated_price.currency_code,
+      amount: calculatedAmount,
+      currency_code: currencyCode,
     }),
-    original_price_number: variant.calculated_price.original_amount,
+    calculated_price_with_tax_number: calculatedAmountWithTax,
+    calculated_price_with_tax: convertToLocale({
+      amount: calculatedAmountWithTax,
+      currency_code: currencyCode,
+    }),
+    original_price_number: originalAmount,
     original_price: convertToLocale({
-      amount: variant.calculated_price.original_amount,
-      currency_code: variant.calculated_price.currency_code,
+      amount: originalAmount,
+      currency_code: currencyCode,
     }),
-    currency_code: variant.calculated_price.currency_code,
-    price_type: variant.calculated_price.calculated_price.price_list_type,
-    percentage_diff: getPercentageDiff(
-      variant.calculated_price.original_amount,
-      variant.calculated_price.calculated_amount
-    ),
+    original_price_with_tax_number: originalAmountWithTax,
+    original_price_with_tax: convertToLocale({
+      amount: originalAmountWithTax,
+      currency_code: currencyCode,
+    }),
+    currency_code: currencyCode,
+    price_type: calculatedPriceObject.price_list_type,
+    percentage_diff: getPercentageDiff(originalAmount, calculatedAmount),
   }
 }
 
@@ -54,12 +78,13 @@ export function getProductPrice({
       return null
     }
 
-    const cheapestVariant: any = product.variants
-      .filter((v: any) => !!v.calculated_price)
-      .sort((a: any, b: any) => {
+    // Sort by calculated_amount (tax-exclusive) to find the cheapest base price variant
+    const cheapestVariant = product.variants
+      .filter((v) => !!v.calculated_price)
+      .sort((a, b) => {
         return (
-          a.calculated_price.calculated_amount -
-          b.calculated_price.calculated_amount
+          (a.calculated_price?.calculated_amount ?? Infinity) -
+          (b.calculated_price?.calculated_amount ?? Infinity)
         )
       })[0]
 
@@ -71,7 +96,7 @@ export function getProductPrice({
       return null
     }
 
-    const variant: any = product.variants?.find(
+    const variant = product.variants?.find(
       (v) => v.id === variantId || v.sku === variantId
     )
 
