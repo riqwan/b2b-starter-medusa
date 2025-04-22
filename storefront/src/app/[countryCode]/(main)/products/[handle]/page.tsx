@@ -55,7 +55,11 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
     notFound()
   }
 
-  const product = await getProductByHandle(handle, region.id)
+  const product = await getProductByHandle(
+    handle,
+    region.id,
+    params.countryCode
+  )
 
   if (!product) {
     notFound()
@@ -80,7 +84,11 @@ export default async function ProductPage(props: Props) {
     notFound()
   }
 
-  const pricedProduct = await getProductByHandle(params.handle, region.id)
+  const pricedProduct = await getProductByHandle(
+    params.handle,
+    region.id,
+    params.countryCode
+  )
   if (!pricedProduct) {
     notFound()
   }

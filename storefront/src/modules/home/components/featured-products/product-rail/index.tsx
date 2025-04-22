@@ -8,9 +8,11 @@ import ProductPreview from "@/modules/products/components/product-preview"
 export default async function ProductRail({
   collection,
   region,
+  countryCode,
 }: {
   collection: HttpTypes.StoreCollection
   region: HttpTypes.StoreRegion
+  countryCode: string
 }) {
   const { products } = collection
 
@@ -21,6 +23,7 @@ export default async function ProductRail({
   const productsWithPrices = await getProductsById({
     ids: products.map((p) => p.id!),
     regionId: region.id,
+    countryCode,
   })
 
   return (
