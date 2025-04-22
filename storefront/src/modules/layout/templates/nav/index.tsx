@@ -9,6 +9,26 @@ import SkeletonAccountButton from "@/modules/skeletons/components/skeleton-accou
 import SkeletonCartButton from "@/modules/skeletons/components/skeleton-cart-button"
 import SkeletonMegaMenu from "@/modules/skeletons/components/skeleton-mega-menu"
 import { Suspense } from "react"
+import { Switch, Label } from "@medusajs/ui"
+import useTaxToggle from "@/lib/hooks/use-tax-toggle"
+
+function TaxToggleSwitch() {
+  const { showTaxes, toggleTaxView } = useTaxToggle()
+
+  return (
+    <div className="flex items-center gap-x-2">
+      <Label htmlFor="tax-toggle" className="text-sm text-neutral-700">
+        {showTaxes ? "Incl. Tax" : "Excl. Tax"}
+      </Label>
+      <Switch
+        id="tax-toggle"
+        checked={showTaxes}
+        onCheckedChange={toggleTaxView}
+        data-testid="tax-toggle-switch"
+      />
+    </div>
+  )
+}
 
 export function NavigationHeader() {
   return (
@@ -44,6 +64,11 @@ export function NavigationHeader() {
                 className="bg-gray-100 text-zinc-900 px-4 py-2 rounded-full pr-10 shadow-borders-base hidden small:inline-block"
               />
             </div>
+
+            <div className="h-4 w-px bg-neutral-300" />
+
+            {/* Add the Tax Toggle Switch here */}
+            <TaxToggleSwitch />
 
             <div className="h-4 w-px bg-neutral-300" />
 

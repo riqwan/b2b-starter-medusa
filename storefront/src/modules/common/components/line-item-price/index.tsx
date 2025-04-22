@@ -1,6 +1,7 @@
 import { convertToLocale } from "@/lib/util/money"
 import { HttpTypes } from "@medusajs/types"
 import { clx, Text } from "@medusajs/ui"
+import useTaxToggle from "@/lib/hooks/use-tax-toggle"
 
 type LineItemPriceProps = {
   item: HttpTypes.StoreCartLineItem | HttpTypes.StoreOrderLineItem
@@ -15,16 +16,17 @@ const LineItemPrice = ({
   className,
   currencyCode,
 }: LineItemPriceProps) => {
-  const adjustmentsSum = (item.adjustments || []).reduce(
-    (acc, adjustment) => adjustment.amount + acc,
-    0
-  )
+  const { showTaxes } = useTaxToggle()
 
-  const originalPrice = item.original_total ?? 0 / item.quantity
+  // Determine the price to display based on the toggle
+  const displayPriceAmount = showTaxes ? item.total : item.subtotal
 
-  const currentPrice = item.total ?? 0 / item.quantity - adjustmentsSum
+  // Determine the original price for comparison (use original_total for tax-inclusive comparison, original_subtotal for tax-exclusive)
+  // Note: This assumes original_subtotal exists and represents the pre-tax, pre-discount price.
+  // Adjust if the definition of 'original' needs clarification for tax-exclusive view.
+  const originalPriceAmount = showTaxes ? item.original_total : item.original_subtotal ?? item.original_total
 
-  const hasReducedPrice = currentPrice < originalPrice
+  const hasReducedPrice = (displayPriceAmount ?? 0) < (originalPriceAmount ?? 0)
 
   return (
     <Text
@@ -34,32 +36,38 @@ const LineItemPrice = ({
       )}
     >
       <span className="flex flex-col text-left">
-        {hasReducedPrice && (
+        {hasReducedPrice && originalPriceAmount !== null && originalPriceAmount !== undefined && (
           <>
             <span
               className="line-through text-ui-fg-muted"
               data-testid="product-original-price"
             >
               {convertToLocale({
-                amount: originalPrice,
+                amount: originalPriceAmount,
                 currency_code: currencyCode ?? "eur",
               })}
             </span>
 
-            {style === "default" && (
+            {/* Optional: Show discount amount if needed, requires calculation */}
+            {/* {style === "default" && (
               <span className="text-base-regular text-ui-fg-interactive">
                 -
                 {convertToLocale({
-                  amount: adjustmentsSum,
+                  amount: (originalPriceAmount ?? 0) - (displayPriceAmount ?? 0),
                   currency_code: currencyCode ?? "eur",
                 })}
               </span>
-            )}
+            )} */}
           </>
         )}
-        <span className="text-base-regular" data-testid="product-price">
+        <span
+          className={clx("text-base-regular", {
+            "text-ui-fg-interactive": hasReducedPrice,
+          })}
+          data-testid="product-price"
+        >
           {convertToLocale({
-            amount: currentPrice,
+            amount: displayPriceAmount ?? 0,
             currency_code: currencyCode ?? "eur",
           })}
         </span>
