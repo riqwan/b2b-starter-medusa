@@ -1,12 +1,16 @@
+"use client"
+
 import { clx, Text } from "@medusajs/ui"
 import { getProductPrice } from "@/lib/util/get-product-price"
 import { HttpTypes } from "@medusajs/types"
+import { useTax } from "@/lib/context/tax-context" // Import useTax
 
 export default function ProductPrice({
   product,
 }: {
   product: HttpTypes.StoreProduct
 }) {
+  const { includeTax } = useTax() // Use the tax context
   const { cheapestPrice } = getProductPrice({
     product,
   })
@@ -29,7 +33,10 @@ export default function ProductPrice({
         >
           From {cheapestPrice.calculated_price}
         </Text>
-        <Text className="text-neutral-600 text-[0.6rem]">Excl. VAT</Text>
+        {/* Adjust label based on toggle */}
+        <Text className="text-neutral-600 text-[0.6rem]">
+          {includeTax ? "Inc. Tax" : "Excl. Tax"}
+        </Text>
       </span>
       {cheapestPrice.price_type === "sale" && (
         <p

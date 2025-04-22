@@ -1,8 +1,13 @@
+"use client"
+
+import { useTax } from "@/lib/context/tax-context" // Import useTax
 import { VariantPrice } from "@/lib/util/get-product-price"
 import { Text, clx } from "@medusajs/ui"
 
 // TODO: Price needs to access price list type
-export default async function PreviewPrice({ price }: { price: VariantPrice }) {
+export default function PreviewPrice({ price }: { price: VariantPrice }) {
+  const { includeTax } = useTax() // Use the tax context
+
   if (!price) {
     return null
   }
@@ -25,6 +30,10 @@ export default async function PreviewPrice({ price }: { price: VariantPrice }) {
         data-testid="price"
       >
         {price.calculated_price}
+      </Text>
+      {/* Adjust label based on toggle */}
+      <Text className="text-neutral-600 text-[0.6rem]">
+        {includeTax ? "Inc. Tax" : "Excl. Tax"}
       </Text>
     </>
   )

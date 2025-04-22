@@ -1,6 +1,7 @@
 "use client"
 
 import { useCart } from "@/lib/context/cart-context"
+import { useTax } from "@/lib/context/tax-context" // Import useTax
 import { convertToLocale } from "@/lib/util/money"
 import Divider from "@/modules/common/components/divider"
 import { Text } from "@medusajs/ui"
@@ -8,22 +9,34 @@ import React from "react"
 
 const CartTotals: React.FC = () => {
   const { isUpdatingCart, cart } = useCart()
+  const { includeTax } = useTax() // Use the tax context
 
   if (!cart) return null
 
   const {
     currency_code,
-    total,
-    item_subtotal,
+    total, // Tax-inclusive total
+    item_subtotal, // Tax-exclusive item subtotal
     tax_total,
     shipping_total,
     discount_total,
     gift_card_total,
   } = cart
 
+  // Determine the final total to display based on the toggle
+  // Note: Medusa's `total` usually includes tax. `item_subtotal` + `shipping_total` is often the pre-tax total.
+  // We might need a more precise pre-tax total calculation if available/needed.
+  const displayTotal = includeTax
+    ? total
+    : (item_subtotal ?? 0) +
+      (shipping_total ?? 0) -
+      (discount_total ?? 0) -
+      (gift_card_total ?? 0)
+
   return (
     <div>
       <div className="flex flex-col gap-y-2 txt-medium text-ui-fg-subtle ">
+        {/* Keep these breakdowns as they are */}
         <div className="flex items-center justify-between">
           <Text className="flex gap-x-1 items-center">
             Subtotal (excl. shipping and taxes)
@@ -76,16 +89,18 @@ const CartTotals: React.FC = () => {
       </div>
       <Divider className="my-2" />
       <div className="flex items-center justify-between text-ui-fg-base mb-2 txt-medium ">
-        <Text className="font-medium">Total</Text>
+        {/* Adjust the label based on the toggle */}
+        <Text className="font-medium">Total {includeTax ? "(Inc. Tax)" : "(Excl. Tax)"}</Text>
         {isUpdatingCart ? (
           <div className="w-28 h-6 mt-[3px] bg-neutral-200 rounded-full animate-pulse" />
         ) : (
           <Text
             className="txt-xlarge-plus"
             data-testid="cart-total"
-            data-value={total || 0}
+            data-value={displayTotal || 0}
           >
-            {convertToLocale({ amount: total ?? 0, currency_code })}
+            {/* Display the calculated total based on the toggle */}
+            {convertToLocale({ amount: displayTotal ?? 0, currency_code })}
           </Text>
         )}
       </div>

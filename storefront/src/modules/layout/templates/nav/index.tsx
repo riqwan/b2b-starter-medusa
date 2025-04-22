@@ -9,6 +9,7 @@ import SkeletonAccountButton from "@/modules/skeletons/components/skeleton-accou
 import SkeletonCartButton from "@/modules/skeletons/components/skeleton-cart-button"
 import SkeletonMegaMenu from "@/modules/skeletons/components/skeleton-mega-menu"
 import { Suspense } from "react"
+import TaxToggle from "@/modules/layout/components/tax-toggle" // Import the toggle
 
 export function NavigationHeader() {
   return (
@@ -43,6 +44,11 @@ export function NavigationHeader() {
                 placeholder="Search for products"
                 className="bg-gray-100 text-zinc-900 px-4 py-2 rounded-full pr-10 shadow-borders-base hidden small:inline-block"
               />
+            </div>
+
+            {/* Add the Tax Toggle here */}
+            <div className="hidden small:flex items-center">
+              <TaxToggle />
             </div>
 
             <div className="h-4 w-px bg-neutral-300" />

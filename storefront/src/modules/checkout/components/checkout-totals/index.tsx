@@ -1,5 +1,6 @@
 "use client"
 
+import { useTax } from "@/lib/context/tax-context" // Import useTax
 import { convertToLocale } from "@/lib/util/money"
 import Divider from "@/modules/common/components/divider"
 import { B2BCart, B2BOrder } from "@/types"
@@ -9,21 +10,32 @@ import React from "react"
 const CheckoutTotals: React.FC<{
   cartOrOrder: B2BCart | B2BOrder
 }> = ({ cartOrOrder }) => {
+  const { includeTax } = useTax() // Use the tax context
+
   if (!cartOrOrder) return null
 
   const {
     currency_code,
-    total,
-    item_subtotal,
+    total, // Tax-inclusive total
+    item_subtotal, // Tax-exclusive item subtotal
     tax_total,
     shipping_total,
     discount_total,
     gift_card_total,
   } = cartOrOrder
 
+  // Determine the final total to display based on the toggle
+  const displayTotal = includeTax
+    ? total
+    : (item_subtotal ?? 0) +
+      (shipping_total ?? 0) -
+      (discount_total ?? 0) -
+      (gift_card_total ?? 0)
+
   return (
     <div>
       <div className="flex flex-col gap-y-2 txt-medium text-ui-fg-subtle ">
+        {/* Keep these breakdowns as they are */}
         <div className="flex items-center justify-between">
           <Text className="flex gap-x-1 items-center">
             Subtotal (excl. shipping and taxes)
@@ -76,13 +88,15 @@ const CheckoutTotals: React.FC<{
       </div>
       <Divider className="my-2" />
       <div className="flex items-center justify-between text-ui-fg-base mb-2 txt-medium ">
-        <Text className="font-medium">Total</Text>
+        {/* Adjust the label based on the toggle */}
+        <Text className="font-medium">Total {includeTax ? "(Inc. Tax)" : "(Excl. Tax)"}</Text>
         <Text
           className="txt-xlarge-plus"
           data-testid="cart-total"
-          data-value={total || 0}
+          data-value={displayTotal || 0}
         >
-          {convertToLocale({ amount: total ?? 0, currency_code })}
+          {/* Display the calculated total based on the toggle */}
+          {convertToLocale({ amount: displayTotal ?? 0, currency_code })}
         </Text>
       </div>
     </div>
