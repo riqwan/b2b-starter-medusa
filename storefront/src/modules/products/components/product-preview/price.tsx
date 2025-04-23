@@ -1,8 +1,12 @@
+"use client" // Needs to be client component to use context
+
 import { VariantPrice } from "@/lib/util/get-product-price"
 import { Text, clx } from "@medusajs/ui"
+import { usePriceTax } from "@/lib/context/price-tax-context" // Import context hook
 
 // TODO: Price needs to access price list type
-export default async function PreviewPrice({ price }: { price: VariantPrice }) {
+export default function PreviewPrice({ price }: { price: VariantPrice }) { // Make it a client component
+  const { showPricesWithTax } = usePriceTax() // Use context
   if (!price) {
     return null
   }
@@ -24,7 +28,7 @@ export default async function PreviewPrice({ price }: { price: VariantPrice }) {
         })}
         data-testid="price"
       >
-        {price.calculated_price}
+        {showPricesWithTax ? price.calculated_price_with_tax : price.calculated_price}
       </Text>
     </>
   )

@@ -5,10 +5,12 @@ import { convertToLocale } from "./money"
 // TODO: Remove this util and use the AdminPrice type directly
 export type VariantPrice = {
   calculated_price_number: string
+  calculated_price_number_with_tax: string // Add tax-inclusive number
   calculated_price: string
   original_price_number: string
   original_price: string
   currency_code: string
+  calculated_price_with_tax: string // Add tax-inclusive formatted string
   price_type: string
   percentage_diff: string
 }
@@ -20,10 +22,16 @@ export const getPricesForVariant = (variant: any): VariantPrice | null => {
 
   return {
     calculated_price_number: variant.calculated_price.calculated_amount,
+    calculated_price_number_with_tax: variant.calculated_price.calculated_amount_with_tax, // Add tax-inclusive number
     calculated_price: convertToLocale({
       amount: variant.calculated_price.calculated_amount,
       currency_code: variant.calculated_price.currency_code,
     }),
+    calculated_price_with_tax: convertToLocale({ // Add tax-inclusive formatted string
+      amount: variant.calculated_price.calculated_amount_with_tax,
+      currency_code: variant.calculated_price.currency_code,
+    }),
+    // Original price doesn't typically include/exclude tax contextually, keep as is
     original_price_number: variant.calculated_price.original_amount,
     original_price: convertToLocale({
       amount: variant.calculated_price.original_amount,

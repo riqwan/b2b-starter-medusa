@@ -5,6 +5,7 @@ import FilePlus from "@/modules/common/icons/file-plus"
 import LogoIcon from "@/modules/common/icons/logo"
 import { MegaMenuWrapper } from "@/modules/layout/components/mega-menu"
 import { RequestQuotePrompt } from "@/modules/quotes/components/request-quote-prompt"
+import TaxDisplayToggle from "@/modules/layout/components/tax-display-toggle" // Import the toggle
 import SkeletonAccountButton from "@/modules/skeletons/components/skeleton-account-button"
 import SkeletonCartButton from "@/modules/skeletons/components/skeleton-cart-button"
 import SkeletonMegaMenu from "@/modules/skeletons/components/skeleton-mega-menu"
@@ -37,7 +38,11 @@ export function NavigationHeader() {
             </nav>
           </div>
           <div className="flex justify-end items-center gap-2">
-            <div className="relative mr-2 hidden small:inline-flex">
+            {/* Add the toggle here */}
+            <div className="hidden small:flex items-center gap-x-2">
+               <TaxDisplayToggle />
+            </div>
+            <div className="relative mr-2 hidden small:inline-block">
               <input
                 type="text"
                 placeholder="Search for products"
