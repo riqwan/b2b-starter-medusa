@@ -1,3 +1,5 @@
+"use client" // Make this a client component
+
 import { getProductPrice } from "@/lib/util/get-product-price"
 import { HttpTypes } from "@medusajs/types"
 import { Text, clx } from "@medusajs/ui"
@@ -5,8 +7,9 @@ import LocalizedClientLink from "@/modules/common/components/localized-client-li
 import Thumbnail from "../thumbnail"
 import PreviewAddToCart from "./preview-add-to-cart"
 import PreviewPrice from "./price"
+import { usePriceDisplay } from "@/lib/context/price-display-context" // Import context hook
 
-export default async function ProductPreview({
+export default function ProductPreview({
   product,
   isFeatured,
   region,
@@ -15,6 +18,8 @@ export default async function ProductPreview({
   isFeatured?: boolean
   region: HttpTypes.StoreRegion
 }) {
+  const { showWithTax } = usePriceDisplay() // Use context
+
   if (!product) {
     return null
   }
@@ -26,6 +31,8 @@ export default async function ProductPreview({
   const inventoryQuantity = product.variants?.reduce((acc, variant) => {
     return acc + (variant?.inventory_quantity || 0)
   }, 0)
+
+  const priceLabel = showWithTax ? "Incl. VAT" : "Excl. VAT"
 
   return (
     <LocalizedClientLink href={`/products/${product.handle}`} className="group">
@@ -48,8 +55,9 @@ export default async function ProductPreview({
           </Text>
         </div>
         <div className="flex flex-col gap-0">
+          {/* PreviewPrice now uses context internally */}
           {cheapestPrice && <PreviewPrice price={cheapestPrice} />}
-          <Text className="text-neutral-600 text-[0.6rem]">Excl. VAT</Text>
+          <Text className="text-neutral-600 text-[0.6rem]">{priceLabel}</Text>
         </div>
         <div className="flex justify-between">
           <div className="flex flex-row gap-1 items-center">

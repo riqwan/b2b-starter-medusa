@@ -1,11 +1,23 @@
+"use client"
+
 import { VariantPrice } from "@/lib/util/get-product-price"
 import { Text, clx } from "@medusajs/ui"
+import { usePriceDisplay } from "@/lib/context/price-display-context" // Import the context hook
 
-// TODO: Price needs to access price list type
-export default async function PreviewPrice({ price }: { price: VariantPrice }) {
+export default function PreviewPrice({ price }: { price: VariantPrice }) {
+  const { showWithTax } = usePriceDisplay() // Use the context
+
   if (!price) {
     return null
   }
+
+  // Determine which price to display based on the toggle
+  const displayPrice = showWithTax
+    ? price.calculated_price_with_tax
+    : price.calculated_price_without_tax
+
+  // Fallback to the default calculated price if tax-specific prices aren't available
+  const finalDisplayPrice = displayPrice ?? price.calculated_price
 
   return (
     <>
@@ -24,7 +36,7 @@ export default async function PreviewPrice({ price }: { price: VariantPrice }) {
         })}
         data-testid="price"
       >
-        {price.calculated_price}
+        {finalDisplayPrice}
       </Text>
     </>
   )

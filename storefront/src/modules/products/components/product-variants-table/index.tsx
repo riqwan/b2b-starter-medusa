@@ -1,3 +1,5 @@
+"use client"
+
 import { addToCartEventBus } from "@/lib/data/cart-event-bus"
 import { getProductPrice } from "@/lib/util/get-product-price"
 import { HttpTypes, StoreProduct, StoreProductVariant } from "@medusajs/types"
@@ -6,6 +8,7 @@ import Button from "@/modules/common/components/button"
 import ShoppingBag from "@/modules/common/icons/shopping-bag"
 import { useState } from "react"
 import BulkTableQuantity from "../bulk-table-quantity"
+import { usePriceDisplay } from "@/lib/context/price-display-context" // Import the context hook
 
 const ProductVariantsTable = ({
   product,
@@ -14,6 +17,7 @@ const ProductVariantsTable = ({
   product: HttpTypes.StoreProduct
   region: HttpTypes.StoreRegion
 }) => {
+  const { showWithTax } = usePriceDisplay() // Use the context
   const [isAdding, setIsAdding] = useState(false)
   const [lineItemsMap, setLineItemsMap] = useState<
     Map<
@@ -89,7 +93,7 @@ const ProductVariantsTable = ({
                 )
               })}
               <Table.HeaderCell className="px-4 border-x">
-                Price
+                Price ({showWithTax ? "Incl. VAT" : "Excl. VAT"})
               </Table.HeaderCell>
               <Table.HeaderCell className="px-4">Quantity</Table.HeaderCell>
             </Table.Row>
@@ -100,6 +104,15 @@ const ProductVariantsTable = ({
                 product,
                 variantId: variant.id,
               })
+
+              // Determine which price to display based on the toggle
+              const displayPrice = showWithTax
+                ? variantPrice?.calculated_price_with_tax
+                : variantPrice?.calculated_price_without_tax
+
+              // Fallback to the default calculated price if tax-specific prices aren't available
+              const finalDisplayPrice =
+                displayPrice ?? variantPrice?.calculated_price
 
               return (
                 <Table.Row
@@ -120,7 +133,7 @@ const ProductVariantsTable = ({
                     )
                   })}
                   <Table.Cell className="px-4 border-x">
-                    {variantPrice?.calculated_price}
+                    {finalDisplayPrice}
                   </Table.Cell>
                   <Table.Cell className="pl-1 !pr-1">
                     <BulkTableQuantity
