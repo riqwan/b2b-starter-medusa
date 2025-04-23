@@ -9,6 +9,8 @@ import FreeShippingPriceNudge from "@/modules/shipping/components/free-shipping-
 import { StoreFreeShippingPrice } from "@/types/shipping-option/http"
 import { ArrowUpRightMini, ExclamationCircleSolid } from "@medusajs/icons"
 import { Metadata } from "next"
+import { TaxDisplayProvider } from "@/lib/context/tax-display-context" // Import the provider
+import TaxPreferenceInitializer from "@/modules/layout/components/tax-preference-modal/initializer" // Import the initializer
 
 export const metadata: Metadata = {
   metadataBase: new URL(getBaseURL()),
@@ -24,7 +26,8 @@ export default async function PageLayout(props: { children: React.ReactNode }) {
   }
 
   return (
-    <>
+    <TaxDisplayProvider> {/* Wrap the content with the provider */}
+      <TaxPreferenceInitializer /> {/* Add the initializer here */}
       <NavigationHeader />
       <div className="flex items-center text-neutral-50 justify-center small:p-4 p-2 text-center bg-neutral-900 small:gap-2 gap-1 text-sm">
         <div className="flex flex-col small:flex-row small:gap-2 gap-1 items-center">
@@ -59,6 +62,6 @@ export default async function PageLayout(props: { children: React.ReactNode }) {
           freeShippingPrices={freeShippingPrices}
         />
       )}
-    </>
+    </TaxDisplayProvider>
   )
 }

@@ -5,8 +5,10 @@ import LocalizedClientLink from "@/modules/common/components/localized-client-li
 import Thumbnail from "../thumbnail"
 import PreviewAddToCart from "./preview-add-to-cart"
 import PreviewPrice from "./price"
+import { useMemo } from "react"; // Import useMemo
+import { useTaxDisplay } from "@/lib/context/tax-display-context"; // Import context hook
 
-export default async function ProductPreview({
+export default function ProductPreview({
   product,
   isFeatured,
   region,
@@ -15,13 +17,28 @@ export default async function ProductPreview({
   isFeatured?: boolean
   region: HttpTypes.StoreRegion
 }) {
+  const { showWithTax } = useTaxDisplay(); // Consume context
+
   if (!product) {
     return null
   }
 
-  const { cheapestPrice } = getProductPrice({
-    product,
-  })
+  // Get the raw calculated_price object for the cheapest variant
+  const cheapestVariant = useMemo(() => {
+    if (!product || !product.variants?.length) {
+      return null
+    }
+    return product.variants
+      .filter((v: any) => !!v.calculated_price)
+      .sort((a: any, b: any) => {
+        return (
+          a.calculated_price.calculated_amount -
+          b.calculated_price.calculated_amount
+        )
+      })[0]
+  }, [product]);
+
+  const cheapestPriceData = cheapestVariant?.calculated_price;
 
   const inventoryQuantity = product.variants?.reduce((acc, variant) => {
     return acc + (variant?.inventory_quantity || 0)
@@ -48,8 +65,11 @@ export default async function ProductPreview({
           </Text>
         </div>
         <div className="flex flex-col gap-0">
-          {cheapestPrice && <PreviewPrice price={cheapestPrice} />}
-          <Text className="text-neutral-600 text-[0.6rem]">Excl. VAT</Text>
+          {/* Pass the raw calculated_price object */}
+          {cheapestPriceData && <PreviewPrice price={cheapestPriceData} />}
+          <Text className="text-neutral-600 text-[0.6rem]">
+            {showWithTax ? "Incl. Tax" : "Excl. Tax"}
+          </Text>
         </div>
         <div className="flex justify-between">
           <div className="flex flex-row gap-1 items-center">
