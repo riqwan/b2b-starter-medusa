@@ -1,16 +1,22 @@
+"use client" // Add this because we'll use hooks
+
 import AccountButton from "@/modules/account/components/account-button"
 import CartButton from "@/modules/cart/components/cart-button"
 import LocalizedClientLink from "@/modules/common/components/localized-client-link"
 import FilePlus from "@/modules/common/icons/file-plus"
 import LogoIcon from "@/modules/common/icons/logo"
+import { useTax } from "@/lib/context/tax-context" // Import useTax hook
 import { MegaMenuWrapper } from "@/modules/layout/components/mega-menu"
 import { RequestQuotePrompt } from "@/modules/quotes/components/request-quote-prompt"
 import SkeletonAccountButton from "@/modules/skeletons/components/skeleton-account-button"
 import SkeletonCartButton from "@/modules/skeletons/components/skeleton-cart-button"
 import SkeletonMegaMenu from "@/modules/skeletons/components/skeleton-mega-menu"
 import { Suspense } from "react"
+import { Switch, Label } from "@medusajs/ui" // Import Switch and Label
 
 export function NavigationHeader() {
+  const { includeTax, toggleTaxInclusion } = useTax() // Use the context
+
   return (
     <div className="sticky top-0 inset-x-0 group bg-white text-zinc-900 small:p-4 p-2 text-sm border-b duration-200 border-ui-border-base z-50">
       <header className="flex w-full content-container relative small:mx-auto justify-between">
@@ -61,6 +67,17 @@ export function NavigationHeader() {
             <Suspense fallback={<SkeletonCartButton />}>
               <CartButton />
             </Suspense>
+            {/* Tax Toggle Switch */}
+            <div className="flex items-center space-x-2 ml-2">
+              <Switch
+                id="tax-toggle"
+                checked={includeTax}
+                onCheckedChange={toggleTaxInclusion}
+              />
+              <Label htmlFor="tax-toggle" className="text-xs whitespace-nowrap">
+                {includeTax ? "Incl. Tax" : "Excl. Tax"}
+              </Label>
+            </div>
           </div>
         </div>
       </header>

@@ -2,10 +2,10 @@ import { HttpTypes } from "@medusajs/types"
 import { getPercentageDiff } from "./get-precentage-diff"
 import { convertToLocale } from "./money"
 
-// TODO: Remove this util and use the AdminPrice type directly
 export type VariantPrice = {
   calculated_price_number: string
   calculated_price: string
+  calculated_price_includes_tax: boolean // Add flag to indicate if displayed price includes tax
   original_price_number: string
   original_price: string
   currency_code: string
@@ -13,27 +13,45 @@ export type VariantPrice = {
   percentage_diff: string
 }
 
-export const getPricesForVariant = (variant: any): VariantPrice | null => {
-  if (!variant?.calculated_price?.calculated_amount) {
+export const getPricesForVariant = (
+  variant: any,
+  includeTax: boolean
+): VariantPrice | null => {
+  const calculatedPrice = variant?.calculated_price
+
+  if (!calculatedPrice?.calculated_amount) {
     return null
   }
 
+  const priceWithTax = calculatedPrice.calculated_amount_with_tax
+  const priceWithoutTax = calculatedPrice.calculated_amount_without_tax
+
+  // Determine which price to display based on the includeTax flag
+  // Fallback to calculated_amount if specific tax amounts are missing
+  const displayAmount = includeTax
+    ? priceWithTax ?? calculatedPrice.calculated_amount
+    : priceWithoutTax ?? calculatedPrice.calculated_amount
+
+  // Determine if the displayed price actually includes tax (could differ from flag if data is missing)
+  const displayAmountIncludesTax = includeTax && priceWithTax !== null && priceWithTax !== undefined
+
   return {
-    calculated_price_number: variant.calculated_price.calculated_amount,
+    calculated_price_number: displayAmount,
     calculated_price: convertToLocale({
-      amount: variant.calculated_price.calculated_amount,
-      currency_code: variant.calculated_price.currency_code,
+      amount: displayAmount,
+      currency_code: calculatedPrice.currency_code,
     }),
-    original_price_number: variant.calculated_price.original_amount,
+    calculated_price_includes_tax: displayAmountIncludesTax,
+    original_price_number: calculatedPrice.original_amount,
     original_price: convertToLocale({
-      amount: variant.calculated_price.original_amount,
-      currency_code: variant.calculated_price.currency_code,
+      amount: calculatedPrice.original_amount,
+      currency_code: calculatedPrice.currency_code,
     }),
-    currency_code: variant.calculated_price.currency_code,
-    price_type: variant.calculated_price.calculated_price.price_list_type,
+    currency_code: calculatedPrice.currency_code,
+    price_type: calculatedPrice.price_list_type,
     percentage_diff: getPercentageDiff(
-      variant.calculated_price.original_amount,
-      variant.calculated_price.calculated_amount
+      calculatedPrice.original_amount,
+      displayAmount // Compare original with the displayed amount
     ),
   }
 }
@@ -41,9 +59,11 @@ export const getPricesForVariant = (variant: any): VariantPrice | null => {
 export function getProductPrice({
   product,
   variantId,
+  includeTax, // Add includeTax parameter
 }: {
   product: HttpTypes.StoreProduct
   variantId?: string
+  includeTax: boolean // Add includeTax parameter type
 }) {
   if (!product || !product.id) {
     throw new Error("No product provided")
@@ -63,7 +83,7 @@ export function getProductPrice({
         )
       })[0]
 
-    return getPricesForVariant(cheapestVariant)
+    return getPricesForVariant(cheapestVariant, includeTax)
   }
 
   const variantPrice = () => {
@@ -79,7 +99,7 @@ export function getProductPrice({
       return null
     }
 
-    return getPricesForVariant(variant)
+    return getPricesForVariant(variant, includeTax)
   }
 
   return {

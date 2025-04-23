@@ -1,6 +1,7 @@
 import { retrieveCart } from "@/lib/data/cart"
 import { retrieveCustomer } from "@/lib/data/customer"
 import { listCartFreeShippingPrices } from "@/lib/data/fulfillment"
+import { TaxProvider } from "@/lib/context/tax-context" // Import TaxProvider
 import { getBaseURL } from "@/lib/util/env"
 import CartMismatchBanner from "@/modules/layout/components/cart-mismatch-banner"
 import Footer from "@/modules/layout/templates/footer"
@@ -24,7 +25,7 @@ export default async function PageLayout(props: { children: React.ReactNode }) {
   }
 
   return (
-    <>
+    <TaxProvider> {/* Wrap with TaxProvider */}
       <NavigationHeader />
       <div className="flex items-center text-neutral-50 justify-center small:p-4 p-2 text-center bg-neutral-900 small:gap-2 gap-1 text-sm">
         <div className="flex flex-col small:flex-row small:gap-2 gap-1 items-center">
@@ -43,15 +44,15 @@ export default async function PageLayout(props: { children: React.ReactNode }) {
           </a>
         </div>
       </div>
-
+      
       {customer && cart && (
         <CartMismatchBanner customer={customer} cart={cart} />
       )}
-
+      
       {props.children}
-
+      
       <Footer />
-
+      
       {cart && freeShippingPrices && (
         <FreeShippingPriceNudge
           variant="popup"
@@ -59,6 +60,6 @@ export default async function PageLayout(props: { children: React.ReactNode }) {
           freeShippingPrices={freeShippingPrices}
         />
       )}
-    </>
+    </TaxProvider>
   )
 }

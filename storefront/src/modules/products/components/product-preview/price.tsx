@@ -1,7 +1,6 @@
 import { VariantPrice } from "@/lib/util/get-product-price"
 import { Text, clx } from "@medusajs/ui"
 
-// TODO: Price needs to access price list type
 export default async function PreviewPrice({ price }: { price: VariantPrice }) {
   if (!price) {
     return null
@@ -25,6 +24,9 @@ export default async function PreviewPrice({ price }: { price: VariantPrice }) {
         data-testid="price"
       >
         {price.calculated_price}
+        <span className="text-neutral-600 text-[0.6rem] ml-1">
+          {price.calculated_price_includes_tax ? "(Incl. Tax)" : "(Excl. Tax)"}
+        </span>
       </Text>
     </>
   )
