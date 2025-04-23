@@ -5,10 +5,13 @@ import FilePlus from "@/modules/common/icons/file-plus"
 import LogoIcon from "@/modules/common/icons/logo"
 import { MegaMenuWrapper } from "@/modules/layout/components/mega-menu"
 import { RequestQuotePrompt } from "@/modules/quotes/components/request-quote-prompt"
+import { Switch } from "@medusajs/ui"
 import SkeletonAccountButton from "@/modules/skeletons/components/skeleton-account-button"
 import SkeletonCartButton from "@/modules/skeletons/components/skeleton-cart-button"
 import SkeletonMegaMenu from "@/modules/skeletons/components/skeleton-mega-menu"
-import { Suspense } from "react"
+import { Suspense, useEffect, useState } from "react"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
+import { useTaxDisplay, createUrlWithTaxDisplay, TaxDisplayState } from "@/lib/hooks/use-tax-display"
 
 export function NavigationHeader() {
   return (
@@ -62,8 +65,36 @@ export function NavigationHeader() {
               <CartButton />
             </Suspense>
           </div>
+          <TaxDisplayToggle />
         </div>
       </header>
+    </div>
+  )
+}
+
+function TaxDisplayToggle() {
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const currentTaxDisplay = useTaxDisplay()
+  const [isChecked, setIsChecked] = useState(currentTaxDisplay === "included")
+
+  // Update local state if URL changes externally
+  useEffect(() => {
+    setIsChecked(currentTaxDisplay === "included")
+  }, [currentTaxDisplay])
+
+  const handleToggle = (checked: boolean) => {
+    const newState: TaxDisplayState = checked ? "included" : "excluded"
+    setIsChecked(checked)
+    const newUrl = createUrlWithTaxDisplay(pathname, searchParams, newState)
+    router.replace(newUrl, { scroll: false }) // Use replace to avoid polluting history
+  }
+
+  return (
+    <div className="flex items-center gap-x-2 ml-4">
+      <label htmlFor="tax-toggle" className="text-xs text-ui-fg-subtle">Tax Incl.</label>
+      <Switch id="tax-toggle" checked={isChecked} onCheckedChange={handleToggle} data-testid="tax-display-toggle"/>
     </div>
   )
 }
