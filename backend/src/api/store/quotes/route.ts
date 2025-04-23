@@ -15,6 +15,12 @@ export const GET = async (
     ContainerRegistrationKeys.QUERY
   );
 
+  // Ensure actor_id exists for listing quotes (middleware already enforces this)
+  if (!req.auth_context?.actor_id) {
+    // This should technically not happen due to middleware, but good practice to check
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+
   const { fields, pagination } = req.queryConfig;
   const { data: quotes, metadata } = await query.graph({
     entity: "quote",
@@ -44,12 +50,15 @@ export const POST = async (
     ContainerRegistrationKeys.QUERY
   );
 
+  // Determine customer_id: use authenticated user if available, otherwise null for guests
+  const customerId = req.auth_context?.actor_id ?? null;
+
   const {
     result: { quote: createdQuote },
   } = await createRequestForQuoteWorkflow(req.scope).run({
     input: {
       ...req.validatedBody,
-      customer_id: req.auth_context.actor_id,
+      customer_id: customerId, // Pass determined customerId (can be null)
     },
   });
 
