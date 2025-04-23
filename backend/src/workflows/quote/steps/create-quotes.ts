@@ -16,7 +16,7 @@ import {
 export const createQuotesStep = createStep(
   "create-quotes",
   async (
-    input: ModuleCreateQuote[],
+    input: (ModuleCreateQuote & { guest_id?: string })[], // Add optional guest_id to input type
     { container }
   ): Promise<StepResponse<ModuleQuote[], string[]>> => {
     const quoteModule = container.resolve<IQuoteModuleService>(QUOTE_MODULE);

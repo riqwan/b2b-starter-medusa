@@ -10,9 +10,9 @@ import { QueryEmployee } from "../company";
 export type QueryQuote = ModuleQuote & {
   draft_order: AdminOrder;
   cart: StoreCart;
-  customer: AdminCustomer & {
+  customer?: (AdminCustomer & { // Make customer potentially optional for guests
     employee: QueryEmployee;
-  };
+  }) | null;
   messages: QueryQuoteMessage[];
 };
 
