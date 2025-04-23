@@ -4,6 +4,7 @@ import LocalizedClientLink from "@/modules/common/components/localized-client-li
 import FilePlus from "@/modules/common/icons/file-plus"
 import LogoIcon from "@/modules/common/icons/logo"
 import { MegaMenuWrapper } from "@/modules/layout/components/mega-menu"
+import TaxToggle from "@/modules/common/components/tax-toggle" // Import the toggle
 import { RequestQuotePrompt } from "@/modules/quotes/components/request-quote-prompt"
 import SkeletonAccountButton from "@/modules/skeletons/components/skeleton-account-button"
 import SkeletonCartButton from "@/modules/skeletons/components/skeleton-cart-button"
@@ -45,6 +46,10 @@ export function NavigationHeader() {
               />
             </div>
 
+            <div className="h-4 w-px bg-neutral-300" />
+            
+            {/* Add the Tax Toggle */}
+            <TaxToggle />
             <div className="h-4 w-px bg-neutral-300" />
 
             <RequestQuotePrompt>

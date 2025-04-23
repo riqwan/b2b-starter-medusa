@@ -1,6 +1,7 @@
 import { addToCartEventBus } from "@/lib/data/cart-event-bus"
 import { getProductPrice } from "@/lib/util/get-product-price"
 import { HttpTypes, StoreProduct, StoreProductVariant } from "@medusajs/types"
+import { usePriceTax } from "@/lib/context/price-tax-context" // Import the context hook
 import { clx, Table } from "@medusajs/ui"
 import Button from "@/modules/common/components/button"
 import ShoppingBag from "@/modules/common/icons/shopping-bag"
@@ -14,6 +15,7 @@ const ProductVariantsTable = ({
   product: HttpTypes.StoreProduct
   region: HttpTypes.StoreRegion
 }) => {
+  const { showWithTax } = usePriceTax() // Consume context
   const [isAdding, setIsAdding] = useState(false)
   const [lineItemsMap, setLineItemsMap] = useState<
     Map<
@@ -89,7 +91,7 @@ const ProductVariantsTable = ({
                 )
               })}
               <Table.HeaderCell className="px-4 border-x">
-                Price
+                Price ({showWithTax ? "Incl." : "Excl."} Tax)
               </Table.HeaderCell>
               <Table.HeaderCell className="px-4">Quantity</Table.HeaderCell>
             </Table.Row>
@@ -100,6 +102,10 @@ const ProductVariantsTable = ({
                 product,
                 variantId: variant.id,
               })
+
+              const displayPrice = showWithTax
+                ? variantPrice?.calculated_price_with_tax
+                : variantPrice?.calculated_price_without_tax
 
               return (
                 <Table.Row
@@ -120,7 +126,7 @@ const ProductVariantsTable = ({
                     )
                   })}
                   <Table.Cell className="px-4 border-x">
-                    {variantPrice?.calculated_price}
+                    {displayPrice || variantPrice?.calculated_price} {/* Fallback */}
                   </Table.Cell>
                   <Table.Cell className="pl-1 !pr-1">
                     <BulkTableQuantity

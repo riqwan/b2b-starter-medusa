@@ -4,6 +4,7 @@ import { Text, clx } from "@medusajs/ui"
 import LocalizedClientLink from "@/modules/common/components/localized-client-link"
 import Thumbnail from "../thumbnail"
 import PreviewAddToCart from "./preview-add-to-cart"
+import { usePriceTax } from "@/lib/context/price-tax-context" // Import context hook
 import PreviewPrice from "./price"
 
 export default async function ProductPreview({
@@ -15,6 +16,8 @@ export default async function ProductPreview({
   isFeatured?: boolean
   region: HttpTypes.StoreRegion
 }) {
+  // Note: Cannot use hooks in Server Components directly.
+  // PreviewPrice is now a client component and will use the hook.
   if (!product) {
     return null
   }
@@ -48,8 +51,10 @@ export default async function ProductPreview({
           </Text>
         </div>
         <div className="flex flex-col gap-0">
-          {cheapestPrice && <PreviewPrice price={cheapestPrice} />}
-          <Text className="text-neutral-600 text-[0.6rem]">Excl. VAT</Text>
+          {/* PreviewPrice is now a client component and will handle tax display */}
+          {cheapestPrice && (
+            <PreviewPrice price={cheapestPrice} />
+          )}
         </div>
         <div className="flex justify-between">
           <div className="flex flex-row gap-1 items-center">
