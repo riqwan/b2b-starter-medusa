@@ -24,6 +24,16 @@ export const getProductsById = async ({
     ...(await getCacheOptions("products")),
   }
 
+  // Explicitly request tax fields within calculated_price
+  const fields = [
+    "*variants",
+    "*variants.calculated_price",
+    "*variants.calculated_price.calculated_amount_with_tax",
+    "*variants.calculated_price.calculated_amount_without_tax",
+    "*variants.calculated_price.is_calculated_price_tax_inclusive",
+    "*variants.inventory_quantity",
+  ].join(",")
+
   return sdk.client
     .fetch<{ products: HttpTypes.StoreProduct[] }>(`/store/products`, {
       credentials: "include",
@@ -32,8 +42,7 @@ export const getProductsById = async ({
         id: ids,
         region_id: regionId,
         country_code: countryCode,
-        fields:
-          "*variants,*variants.calculated_price,*variants.inventory_quantity",
+        fields: fields, // Use the explicit fields string
       },
       headers,
       next,
@@ -55,6 +64,17 @@ export const getProductByHandle = async (
     ...(await getCacheOptions("products")),
   }
 
+  // Explicitly request tax fields within calculated_price
+  const fields = [
+    "*variants.calculated_price",
+    "*variants.calculated_price.calculated_amount_with_tax",
+    "*variants.calculated_price.calculated_amount_without_tax",
+    "*variants.calculated_price.is_calculated_price_tax_inclusive",
+    "+variants.inventory_quantity",
+    "+metadata",
+    "+tags",
+  ].join(",")
+
   return sdk.client
     .fetch<{ products: HttpTypes.StoreProduct[] }>(`/store/products`, {
       credentials: "include",
@@ -63,8 +83,7 @@ export const getProductByHandle = async (
         handle,
         region_id: regionId,
         country_code: countryCode,
-        fields:
-          "*variants.calculated_price,+variants.inventory_quantity,+metadata,+tags",
+        fields: fields, // Use the explicit fields string
       },
       headers,
       next,
@@ -119,6 +138,14 @@ export const listProducts = async ({
     ...(await getCacheOptions("products")),
   }
 
+  // Explicitly request tax fields within calculated_price
+  const fields = [
+    "*variants.calculated_price",
+    "*variants.calculated_price.calculated_amount_with_tax",
+    "*variants.calculated_price.calculated_amount_without_tax",
+    "*variants.calculated_price.is_calculated_price_tax_inclusive",
+  ].join(",")
+
   return sdk.client
     .fetch<{ products: HttpTypes.StoreProduct[]; count: number }>(
       `/store/products`,
@@ -129,7 +156,7 @@ export const listProducts = async ({
           limit,
           offset,
           region_id: region?.id,
-          fields: "*variants.calculated_price",
+          fields: fields, // Use the explicit fields string
           ...queryParams,
         },
         headers,
@@ -174,13 +201,14 @@ export const listProductsWithSort = async ({
 }> => {
   const limit = queryParams?.limit || 12
 
+  // Fetch the full list with explicit tax fields
   const {
     response: { products, count },
   } = await listProducts({
-    pageParam: 0,
+    pageParam: 1, // Fetch all (up to limit) for sorting
     queryParams: {
       ...queryParams,
-      limit: 100,
+      limit: 100, // Fetch a larger batch for sorting
     },
     countryCode,
     regionId,
@@ -190,7 +218,7 @@ export const listProductsWithSort = async ({
 
   const pageParam = (page - 1) * limit
 
-  const nextPage = count > pageParam + limit ? pageParam + limit : null
+  const nextPage = count > pageParam + limit ? page + 1 : null
 
   const paginatedProducts = sortedProducts.slice(pageParam, pageParam + limit)
 
