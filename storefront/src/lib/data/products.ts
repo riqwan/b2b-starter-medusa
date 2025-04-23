@@ -129,6 +129,7 @@ export const listProducts = async ({
           limit,
           offset,
           region_id: region?.id,
+          country_code: countryCode,
           fields: "*variants.calculated_price",
           ...queryParams,
         },
