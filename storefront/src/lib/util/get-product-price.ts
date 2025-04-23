@@ -2,12 +2,16 @@ import { HttpTypes } from "@medusajs/types"
 import { getPercentageDiff } from "./get-precentage-diff"
 import { convertToLocale } from "./money"
 
-// TODO: Remove this util and use the AdminPrice type directly
+// Updated VariantPrice type to include both tax amounts
 export type VariantPrice = {
-  calculated_price_number: string
+  calculated_price_number: number
   calculated_price: string
-  original_price_number: string
+  calculated_price_with_tax_number: number
+  calculated_price_with_tax: string
+  original_price_number: number
   original_price: string
+  original_price_with_tax_number: number
+  original_price_with_tax: string
   currency_code: string
   price_type: string
   percentage_diff: string
@@ -18,22 +22,40 @@ export const getPricesForVariant = (variant: any): VariantPrice | null => {
     return null
   }
 
+  const calculatedAmount = variant.calculated_price.calculated_amount
+  const originalAmount = variant.calculated_price.original_amount
+  const currencyCode = variant.calculated_price.currency_code
+
+  // Use tax-inclusive amounts if available, otherwise fallback to non-tax amounts
+  const calculatedAmountWithTax = variant.calculated_price.calculated_amount_with_tax ?? calculatedAmount
+  const originalAmountWithTax = variant.calculated_price.original_amount_with_tax ?? originalAmount
+
   return {
-    calculated_price_number: variant.calculated_price.calculated_amount,
+    calculated_price_number: calculatedAmount,
     calculated_price: convertToLocale({
-      amount: variant.calculated_price.calculated_amount,
-      currency_code: variant.calculated_price.currency_code,
+      amount: calculatedAmount,
+      currency_code: currencyCode,
     }),
-    original_price_number: variant.calculated_price.original_amount,
+    calculated_price_with_tax_number: calculatedAmountWithTax,
+    calculated_price_with_tax: convertToLocale({
+      amount: calculatedAmountWithTax,
+      currency_code: currencyCode,
+    }),
+    original_price_number: originalAmount,
     original_price: convertToLocale({
-      amount: variant.calculated_price.original_amount,
-      currency_code: variant.calculated_price.currency_code,
+      amount: originalAmount,
+      currency_code: currencyCode,
     }),
-    currency_code: variant.calculated_price.currency_code,
+    original_price_with_tax_number: originalAmountWithTax,
+    original_price_with_tax: convertToLocale({
+      amount: originalAmountWithTax,
+      currency_code: currencyCode,
+    }),
+    currency_code: currencyCode,
     price_type: variant.calculated_price.calculated_price.price_list_type,
     percentage_diff: getPercentageDiff(
-      variant.calculated_price.original_amount,
-      variant.calculated_price.calculated_amount
+      originalAmount,
+      calculatedAmount
     ),
   }
 }

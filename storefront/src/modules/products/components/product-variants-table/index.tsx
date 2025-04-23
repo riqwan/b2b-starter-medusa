@@ -1,3 +1,5 @@
+"use client"
+
 import { addToCartEventBus } from "@/lib/data/cart-event-bus"
 import { getProductPrice } from "@/lib/util/get-product-price"
 import { HttpTypes, StoreProduct, StoreProductVariant } from "@medusajs/types"
@@ -6,6 +8,7 @@ import Button from "@/modules/common/components/button"
 import ShoppingBag from "@/modules/common/icons/shopping-bag"
 import { useState } from "react"
 import BulkTableQuantity from "../bulk-table-quantity"
+import { useTax } from "@/lib/context/tax-context" // Import useTax hook
 
 const ProductVariantsTable = ({
   product,
@@ -14,6 +17,7 @@ const ProductVariantsTable = ({
   product: HttpTypes.StoreProduct
   region: HttpTypes.StoreRegion
 }) => {
+  const { includeTax } = useTax() // Consume the tax context
   const [isAdding, setIsAdding] = useState(false)
   const [lineItemsMap, setLineItemsMap] = useState<
     Map<
@@ -89,7 +93,7 @@ const ProductVariantsTable = ({
                 )
               })}
               <Table.HeaderCell className="px-4 border-x">
-                Price
+                Price ({includeTax ? "Incl. Tax" : "Excl. Tax"})
               </Table.HeaderCell>
               <Table.HeaderCell className="px-4">Quantity</Table.HeaderCell>
             </Table.Row>
@@ -100,6 +104,11 @@ const ProductVariantsTable = ({
                 product,
                 variantId: variant.id,
               })
+
+              // Determine which price to display based on context
+              const displayPrice = includeTax
+                ? variantPrice?.calculated_price_with_tax
+                : variantPrice?.calculated_price
 
               return (
                 <Table.Row
@@ -120,7 +129,7 @@ const ProductVariantsTable = ({
                     )
                   })}
                   <Table.Cell className="px-4 border-x">
-                    {variantPrice?.calculated_price}
+                    {displayPrice}
                   </Table.Cell>
                   <Table.Cell className="pl-1 !pr-1">
                     <BulkTableQuantity
