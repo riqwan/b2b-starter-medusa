@@ -5,6 +5,7 @@ import {
 } from "@medusajs/core-flows";
 import { OrderStatus } from "@medusajs/framework/utils";
 import {
+  when, // Import when
   createWorkflow,
   transform,
   WorkflowResponse,
@@ -21,9 +22,16 @@ import { createQuotesWorkflow } from "./create-quote";
   The customer can then accept or reject the changes. The lifecycle of the quote is managed through its status,
   that is performed by independent workflows - accept / reject.
 */
+
+// Define the input type for the workflow, making customer_id optional
+type WorkflowInput = {
+  cart_id: string;
+  customer_id: string | null; // Changed to allow null for guests
+};
+
 export const createRequestForQuoteWorkflow = createWorkflow(
   "create-request-for-quote",
-  function (input: { cart_id: string; customer_id: string }) {
+  function (input: WorkflowInput) {
     const cart = useRemoteQueryStep({
       entry_point: "cart",
       fields: [
@@ -32,7 +40,8 @@ export const createRequestForQuoteWorkflow = createWorkflow(
         "currency_code",
         "region_id",
         "customer.id",
-        "customer.email",
+        "customer.email", // Keep fetching customer email from cart if available
+        "email", // Also fetch top-level cart email for guests
         "shipping_address.*",
         "billing_address.*",
         "items.*",
@@ -44,21 +53,39 @@ export const createRequestForQuoteWorkflow = createWorkflow(
       throw_if_key_not_found: true,
     });
 
-    const customer = useRemoteQueryStep({
-      entry_point: "customer",
-      fields: ["id", "customer"],
-      variables: { id: input.customer_id },
-      list: false,
-      throw_if_key_not_found: true,
-    }).config({ name: "customer-query" });
+    // Conditionally fetch customer only if customer_id is provided
+    const { customer } = when(
+      { input },
+      ({ input }) => {
+        return !!input.customer_id;
+      }
+    ).then(() => {
+      const customer = useRemoteQueryStep({
+        entry_point: "customer",
+        fields: ["id", "email"], // Fetch email if customer exists
+        variables: { id: input.customer_id },
+        list: false,
+        throw_if_key_not_found: true, // Assume customer_id is valid if provided
+      }).config({ name: "customer-query" });
+      return { customer };
+    });
 
     const orderInput = transform({ cart, customer }, ({ cart, customer }) => {
+      // Ensure email exists, prioritize customer email, then cart email
+      const email = customer?.email ?? cart.email;
+      if (!email) {
+        // If no email is found on either customer or cart, throw an error
+        // as draft orders typically require an email.
+        // Consider alternative handling if guest carts might not have emails.
+        throw new Error("Email is required to create a draft order for the quote.");
+      }
+
       return {
         is_draft_order: true,
         status: OrderStatus.DRAFT,
         sales_channel_id: cart.sales_channel_id,
-        email: customer.email,
-        customer_id: customer.id,
+        email: email, // Use determined email
+        customer_id: customer?.id ?? null, // Pass customer ID if available, otherwise null
         billing_address: cart.billing_address,
         shipping_address: cart.shipping_address,
         items: cart.items,
@@ -91,7 +118,7 @@ export const createRequestForQuoteWorkflow = createWorkflow(
         {
           draft_order_id: draftOrder.id,
           cart_id: cart.id,
-          customer_id: customer.id,
+          customer_id: customer?.id ?? null, // Pass customer ID if available, otherwise null
           order_change_id: changeOrder.id,
         },
       ],
