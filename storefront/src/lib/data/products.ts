@@ -33,7 +33,7 @@ export const getProductsById = async ({
         region_id: regionId,
         country_code: countryCode,
         fields:
-          "*variants,*variants.calculated_price,*variants.inventory_quantity",
+          "*variants,*variants.calculated_price,*variants.inventory_quantity,*variants.calculated_price.calculated_amount_with_tax,*variants.calculated_price.calculated_amount_without_tax",
       },
       headers,
       next,
@@ -64,7 +64,7 @@ export const getProductByHandle = async (
         region_id: regionId,
         country_code: countryCode,
         fields:
-          "*variants.calculated_price,+variants.inventory_quantity,+metadata,+tags",
+          "*variants.calculated_price,+variants.inventory_quantity,+metadata,+tags,*variants.calculated_price.calculated_amount_with_tax,*variants.calculated_price.calculated_amount_without_tax",
       },
       headers,
       next,
@@ -130,7 +130,7 @@ export const listProducts = async ({
           offset,
           region_id: region?.id,
           country_code: countryCode,
-          fields: "*variants.calculated_price",
+          fields: "*variants.calculated_price,*variants.calculated_price.calculated_amount_with_tax,*variants.calculated_price.calculated_amount_without_tax",
           ...queryParams,
         },
         headers,

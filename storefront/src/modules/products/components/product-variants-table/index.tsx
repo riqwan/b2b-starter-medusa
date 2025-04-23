@@ -1,11 +1,14 @@
+"use client" // Add this because we'll use hooks
+
 import { addToCartEventBus } from "@/lib/data/cart-event-bus"
 import { getProductPrice } from "@/lib/util/get-product-price"
 import { HttpTypes, StoreProduct, StoreProductVariant } from "@medusajs/types"
-import { clx, Table } from "@medusajs/ui"
+import { clx, Table, Text } from "@medusajs/ui" // Import Text
 import Button from "@/modules/common/components/button"
 import ShoppingBag from "@/modules/common/icons/shopping-bag"
 import { useState } from "react"
 import BulkTableQuantity from "../bulk-table-quantity"
+import { useTax } from "@/lib/context/tax-context" // Import useTax hook
 
 const ProductVariantsTable = ({
   product,
@@ -14,6 +17,8 @@ const ProductVariantsTable = ({
   product: HttpTypes.StoreProduct
   region: HttpTypes.StoreRegion
 }) => {
+  const { includeTax } = useTax() // Use the context
+
   const [isAdding, setIsAdding] = useState(false)
   const [lineItemsMap, setLineItemsMap] = useState<
     Map<
@@ -99,6 +104,7 @@ const ProductVariantsTable = ({
               const { variantPrice } = getProductPrice({
                 product,
                 variantId: variant.id,
+                includeTax, // Pass includeTax flag
               })
 
               return (
@@ -120,7 +126,12 @@ const ProductVariantsTable = ({
                     )
                   })}
                   <Table.Cell className="px-4 border-x">
-                    {variantPrice?.calculated_price}
+                    <div className="flex flex-col">
+                      <span>{variantPrice?.calculated_price}</span>
+                      <Text className="text-neutral-600 text-[0.6rem]">
+                        {variantPrice?.calculated_price_includes_tax ? "Incl. Tax" : "Excl. Tax"}
+                      </Text>
+                    </div>
                   </Table.Cell>
                   <Table.Cell className="pl-1 !pr-1">
                     <BulkTableQuantity
