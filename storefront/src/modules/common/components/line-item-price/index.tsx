@@ -1,6 +1,7 @@
-import { convertToLocale } from "@/lib/util/money"
+import { formatAmountWithTaxToggle, convertToLocale } from "@/lib/util/money"
 import { HttpTypes } from "@medusajs/types"
 import { clx, Text } from "@medusajs/ui"
+import { useTaxDisplay } from "@/lib/hooks/use-tax-display"
 
 type LineItemPriceProps = {
   item: HttpTypes.StoreCartLineItem | HttpTypes.StoreOrderLineItem
@@ -15,16 +16,23 @@ const LineItemPrice = ({
   className,
   currencyCode,
 }: LineItemPriceProps) => {
+  const taxDisplayState = useTaxDisplay()
   const adjustmentsSum = (item.adjustments || []).reduce(
     (acc, adjustment) => adjustment.amount + acc,
     0
   )
 
-  const originalPrice = item.original_total ?? 0 / item.quantity
+  // Assuming original_total and total are tax-exclusive from Medusa V2
+  // If they include tax based on region setting, this needs adjustment.
+  const originalPriceExclTax = (item.original_total ?? 0) / item.quantity
+  const currentPriceExclTax = ((item.total ?? 0) / item.quantity) - adjustmentsSum
+  const itemTaxAmount = (item.tax_total ?? 0) / item.quantity // Assuming tax_total is available per item
 
-  const currentPrice = item.total ?? 0 / item.quantity - adjustmentsSum
 
-  const hasReducedPrice = currentPrice < originalPrice
+  const displayOriginalPrice = formatAmountWithTaxToggle({ amount: originalPriceExclTax, currency_code: currencyCode, tax_amount: itemTaxAmount, taxDisplayState })
+  const displayCurrentPrice = formatAmountWithTaxToggle({ amount: currentPriceExclTax, currency_code: currencyCode, tax_amount: itemTaxAmount, taxDisplayState })
+
+  const hasReducedPrice = currentPriceExclTax < originalPriceExclTax
 
   return (
     <Text
@@ -40,17 +48,15 @@ const LineItemPrice = ({
               className="line-through text-ui-fg-muted"
               data-testid="product-original-price"
             >
-              {convertToLocale({
-                amount: originalPrice,
-                currency_code: currencyCode ?? "eur",
-              })}
+              {displayOriginalPrice}
             </span>
 
             {style === "default" && (
               <span className="text-base-regular text-ui-fg-interactive">
                 -
+                {/* Adjustments are usually pre-tax, display as is */}
                 {convertToLocale({
-                  amount: adjustmentsSum,
+                  amount: adjustmentsSum, // Display adjustment amount directly
                   currency_code: currencyCode ?? "eur",
                 })}
               </span>
@@ -58,10 +64,8 @@ const LineItemPrice = ({
           </>
         )}
         <span className="text-base-regular" data-testid="product-price">
-          {convertToLocale({
-            amount: currentPrice,
-            currency_code: currencyCode ?? "eur",
-          })}
+          {/* Display current price based on toggle */}
+          {displayCurrentPrice}
         </span>
       </span>
     </Text>

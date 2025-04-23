@@ -7,9 +7,9 @@ import { Suspense } from "react"
 import { listCollections } from "@/lib/data/collections"
 
 export const metadata: Metadata = {
-  title: "Medusa Next.js Starter Template",
+  title: "Medusa B2B Starter",
   description:
-    "A performant frontend ecommerce starter template with Next.js 14 and Medusa.",
+    "A performant frontend ecommerce starter template with Next.js 15 and Medusa.",
 }
 
 export async function generateStaticParams() {
@@ -22,8 +22,10 @@ export async function generateStaticParams() {
 
 export default async function Home(props: {
   params: Promise<{ countryCode: string }>
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }> // Add searchParams
 }) {
   const params = await props.params
+  const searchParams = await props.searchParams // Read searchParams
 
   const { countryCode } = params
 
@@ -45,13 +47,12 @@ export default async function Home(props: {
     <>
       <Hero />
       <div className="py-12">
-        <ul className="flex flex-col gap-x-6" data-testid="featured-products">
-          <FeaturedProducts
-            collections={collections}
-            region={region}
-            countryCode={countryCode}
-          />
-        </ul>
+        <Suspense
+          fallback={<SkeletonFeaturedProducts collections={collections} />}
+        >
+          {/* Pass searchParams down */}
+          <FeaturedProducts collections={collections} region={region} searchParams={searchParams} />
+        </Suspense>
       </div>
     </>
   )

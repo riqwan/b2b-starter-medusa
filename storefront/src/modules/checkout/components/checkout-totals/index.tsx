@@ -1,16 +1,18 @@
 "use client"
 
-import { convertToLocale } from "@/lib/util/money"
+import { formatAmountWithTaxToggle } from "@/lib/util/money"
 import Divider from "@/modules/common/components/divider"
 import { B2BCart, B2BOrder } from "@/types"
 import { Text } from "@medusajs/ui"
 import React from "react"
+import { useTaxDisplay } from "@/lib/hooks/use-tax-display"
 
 const CheckoutTotals: React.FC<{
   cartOrOrder: B2BCart | B2BOrder
 }> = ({ cartOrOrder }) => {
   if (!cartOrOrder) return null
 
+  const taxDisplayState = useTaxDisplay()
   const {
     currency_code,
     total,
@@ -20,6 +22,13 @@ const CheckoutTotals: React.FC<{
     discount_total,
     gift_card_total,
   } = cartOrOrder
+
+  // Determine the base total based on toggle state
+  const displayTotal = taxDisplayState === 'included' 
+    ? (total ?? 0) 
+    : (total ?? 0) - (tax_total ?? 0);
+
+  const displaySubtotal = taxDisplayState === 'included' ? (item_subtotal ?? 0) + (tax_total ?? 0) : (item_subtotal ?? 0);
 
   return (
     <div>
@@ -32,7 +41,12 @@ const CheckoutTotals: React.FC<{
             data-testid="cart-item-subtotal"
             data-value={item_subtotal || 0}
           >
-            {convertToLocale({ amount: item_subtotal ?? 0, currency_code })}
+            {formatAmountWithTaxToggle({
+              amount: item_subtotal ?? 0,
+              currency_code,
+              tax_amount: tax_total ?? 0, // Pass tax amount to potentially add
+              taxDisplayState,
+            })}
           </Text>
         </div>
         {!!discount_total && (
@@ -44,20 +58,20 @@ const CheckoutTotals: React.FC<{
               data-value={discount_total || 0}
             >
               -{" "}
-              {convertToLocale({ amount: discount_total ?? 0, currency_code })}
+              {formatAmountWithTaxToggle({ amount: discount_total ?? 0, currency_code, taxDisplayState })}
             </Text>
           </div>
         )}
         <div className="flex items-center justify-between">
           <Text>Shipping</Text>
           <Text data-testid="cart-shipping" data-value={shipping_total || 0}>
-            {convertToLocale({ amount: shipping_total ?? 0, currency_code })}
+            {formatAmountWithTaxToggle({ amount: shipping_total ?? 0, currency_code, taxDisplayState })}
           </Text>
         </div>
         <div className="flex justify-between">
           <Text className="flex gap-x-1 items-center ">Taxes</Text>
           <Text data-testid="cart-taxes" data-value={tax_total || 0}>
-            {convertToLocale({ amount: tax_total ?? 0, currency_code })}
+            {formatAmountWithTaxToggle({ amount: tax_total ?? 0, currency_code, taxDisplayState: 'excluded' })} {/* Always show tax amount itself as excluded */}
           </Text>
         </div>
         {!!gift_card_total && (
@@ -69,7 +83,7 @@ const CheckoutTotals: React.FC<{
               data-value={gift_card_total || 0}
             >
               -{" "}
-              {convertToLocale({ amount: gift_card_total ?? 0, currency_code })}
+              {formatAmountWithTaxToggle({ amount: gift_card_total ?? 0, currency_code, taxDisplayState })}
             </Text>
           </div>
         )}
@@ -82,7 +96,12 @@ const CheckoutTotals: React.FC<{
           data-testid="cart-total"
           data-value={total || 0}
         >
-          {convertToLocale({ amount: total ?? 0, currency_code })}
+          {formatAmountWithTaxToggle({
+            amount: (total ?? 0) - (tax_total ?? 0), // Base total is total minus tax
+            currency_code,
+            tax_amount: tax_total ?? 0,
+            taxDisplayState,
+          })}
         </Text>
       </div>
     </div>

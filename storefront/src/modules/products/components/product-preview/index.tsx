@@ -4,16 +4,19 @@ import { Text, clx } from "@medusajs/ui"
 import LocalizedClientLink from "@/modules/common/components/localized-client-link"
 import Thumbnail from "../thumbnail"
 import PreviewAddToCart from "./preview-add-to-cart"
+import { TaxDisplayState } from "@/lib/hooks/use-tax-display"
 import PreviewPrice from "./price"
 
 export default async function ProductPreview({
   product,
   isFeatured,
   region,
+  taxDisplayState, // Add prop
 }: {
   product: HttpTypes.StoreProduct
   isFeatured?: boolean
   region: HttpTypes.StoreRegion
+  taxDisplayState: TaxDisplayState // Add prop type
 }) {
   if (!product) {
     return null
@@ -48,8 +51,9 @@ export default async function ProductPreview({
           </Text>
         </div>
         <div className="flex flex-col gap-0">
-          {cheapestPrice && <PreviewPrice price={cheapestPrice} />}
-          <Text className="text-neutral-600 text-[0.6rem]">Excl. VAT</Text>
+          {/* Pass taxDisplayState to PreviewPrice */} 
+          {cheapestPrice && <PreviewPrice price={cheapestPrice} taxDisplayState={taxDisplayState} />}
+          <Text className="text-neutral-600 text-[0.6rem]">{taxDisplayState === 'included' ? 'Incl. Tax' : 'Excl. Tax'}</Text>
         </div>
         <div className="flex justify-between">
           <div className="flex flex-row gap-1 items-center">

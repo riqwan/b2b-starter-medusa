@@ -1,44 +1,56 @@
-import { getProductsById } from "@/lib/data/products"
+import { listProducts } from "@/lib/data/products"
 import { HttpTypes } from "@medusajs/types"
 import { Text } from "@medusajs/ui"
 
-import InteractiveLink from "@/modules/common/components/interactive-link"
+import InteractiveLink from "@modules/common/components/interactive-link"
+import { TaxDisplayState } from "@/lib/hooks/use-tax-display"
 import ProductPreview from "@/modules/products/components/product-preview"
 
 export default async function ProductRail({
   collection,
   region,
-  countryCode,
+  searchParams, // Add searchParams to read URL state
 }: {
   collection: HttpTypes.StoreCollection
   region: HttpTypes.StoreRegion
-  countryCode: string
+  searchParams?: { [key: string]: string | string[] | undefined }
 }) {
-  const { products } = collection
+  const {
+    response: { products: pricedProducts },
+  } = await listProducts({
+    regionId: region.id,
+    queryParams: {
+      collection_id: collection.id,
+      fields: "*variants.calculated_price",
+    },
+  })
 
-  if (!products) {
+  const taxDisplayState: TaxDisplayState = searchParams?.taxDisplay === 'included' 
+    ? 'included' 
+    : 'excluded';
+
+  if (!pricedProducts) {
     return null
   }
 
-  const productsWithPrices = await getProductsById({
-    ids: products.map((p) => p.id!),
-    regionId: region.id,
-    countryCode,
-  })
-
   return (
-    <div className="content-container py-12 small:py-24 bg-neutral-100">
+    <div className="content-container py-12 small:py-24">
       <div className="flex justify-between mb-8">
-        <Text className="text-base">{collection.title}</Text>
+        <Text className="txt-xlarge">{collection.title}</Text>
         <InteractiveLink href={`/collections/${collection.handle}`}>
           View all
         </InteractiveLink>
       </div>
-      <ul className="grid grid-cols-1 small:grid-cols-4 gap-x-3 gap-y-3 small:gap-y-36">
-        {productsWithPrices &&
-          productsWithPrices.map((product) => (
+      <ul className="grid grid-cols-2 small:grid-cols-3 gap-x-6 gap-y-24 small:gap-y-36">
+        {pricedProducts &&
+          pricedProducts.map((product) => (
             <li key={product.id}>
-              <ProductPreview product={product} region={region} isFeatured />
+              <ProductPreview
+                product={product}
+                region={region}
+                isFeatured
+                taxDisplayState={taxDisplayState} // Pass state down
+              />
             </li>
           ))}
       </ul>
