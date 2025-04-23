@@ -4,7 +4,8 @@ import { Analytics } from "@vercel/analytics/next"
 import { GeistSans } from "geist/font/sans"
 import { Metadata } from "next"
 import "@/styles/globals.css"
-import { TaxProvider } from "@/lib/context/tax-context" // Import the TaxProvider
+import { TaxProvider } from "@/lib/context/tax-context"
+import TaxPreferenceModal from "@/modules/common/components/tax-preference-modal" // Import the modal
 
 export const metadata: Metadata = {
   metadataBase: new URL(getBaseURL()),
@@ -14,8 +15,9 @@ export default function RootLayout(props: { children: React.ReactNode }) {
   return (
     <html lang="en" data-mode="light" className={GeistSans.variable}>
       <body>
-        {/* Wrap the main content with TaxProvider */}
         <TaxProvider>
+          {/* Render the modal inside the provider */}
+          <TaxPreferenceModal />
           <main className="relative">{props.children}</main>
         </TaxProvider>
         <Toaster className="z-[99999]" position="bottom-left" />
