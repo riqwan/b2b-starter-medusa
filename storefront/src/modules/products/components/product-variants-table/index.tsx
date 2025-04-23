@@ -1,11 +1,14 @@
+"use client"; // Add this directive
+
 import { addToCartEventBus } from "@/lib/data/cart-event-bus"
-import { getProductPrice } from "@/lib/util/get-product-price"
 import { HttpTypes, StoreProduct, StoreProductVariant } from "@medusajs/types"
 import { clx, Table } from "@medusajs/ui"
 import Button from "@/modules/common/components/button"
 import ShoppingBag from "@/modules/common/icons/shopping-bag"
 import { useState } from "react"
 import BulkTableQuantity from "../bulk-table-quantity"
+import { useTaxDisplay } from "@/lib/context/tax-display-context" // Import context hook
+import { convertToLocale } from "@/lib/util/money" // Import money util
 
 const ProductVariantsTable = ({
   product,
@@ -14,6 +17,7 @@ const ProductVariantsTable = ({
   product: HttpTypes.StoreProduct
   region: HttpTypes.StoreRegion
 }) => {
+  const { showWithTax } = useTaxDisplay(); // Consume context
   const [isAdding, setIsAdding] = useState(false)
   const [lineItemsMap, setLineItemsMap] = useState<
     Map<
@@ -89,17 +93,30 @@ const ProductVariantsTable = ({
                 )
               })}
               <Table.HeaderCell className="px-4 border-x">
-                Price
+                Price ({showWithTax ? "Incl. Tax" : "Excl. Tax"})
               </Table.HeaderCell>
               <Table.HeaderCell className="px-4">Quantity</Table.HeaderCell>
             </Table.Row>
           </Table.Header>
           <Table.Body className="border-none">
             {product.variants?.map((variant, index) => {
-              const { variantPrice } = getProductPrice({
-                product,
-                variantId: variant.id,
-              })
+              const priceData = variant.calculated_price;
+
+              if (!priceData) {
+                return null; // Skip rendering if price data is missing
+              }
+
+              const displayAmount = showWithTax
+                ? priceData.calculated_amount_with_tax
+                : priceData.calculated_amount_without_tax;
+
+              // Handle cases where tax-specific amounts might be null/undefined
+              const finalDisplayAmount = displayAmount ?? priceData.calculated_amount;
+
+              const formattedDisplayPrice = convertToLocale({
+                amount: finalDisplayAmount,
+                currency_code: priceData.currency_code,
+              });
 
               return (
                 <Table.Row
@@ -120,7 +137,7 @@ const ProductVariantsTable = ({
                     )
                   })}
                   <Table.Cell className="px-4 border-x">
-                    {variantPrice?.calculated_price}
+                    {formattedDisplayPrice}
                   </Table.Cell>
                   <Table.Cell className="pl-1 !pr-1">
                     <BulkTableQuantity
