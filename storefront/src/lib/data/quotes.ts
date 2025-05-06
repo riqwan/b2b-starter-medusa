@@ -1,6 +1,7 @@
 "use server"
 
 import { sdk } from "@/lib/config"
+import { retrieveCart } from "@/lib/data/cart" // Import retrieveCart
 import {
   getAuthHeaders,
   getCacheOptions,
@@ -16,6 +17,7 @@ import {
 } from "@/types"
 import { track } from "@vercel/analytics/server"
 import { revalidateTag } from "next/cache"
+import { getGuestId, setGuestId } from "./guest" // Import guest ID helpers
 
 export const createQuote = async () => {
   const headers = {
@@ -24,18 +26,33 @@ export const createQuote = async () => {
 
   const cartId = await getCartId()
 
+  // Ensure cart exists and has an email if user is guest
+  const auth = await getAuthHeaders();
+  if (!auth.hasOwnProperty('authorization')) {
+    const cart = await retrieveCart(cartId);
+    if (!cart?.email) {
+      throw new Error("Cart email is required to create a quote for guest users.");
+      // Consider prompting user for email or integrating with checkout email step
+    }
+  }
+
   return sdk.client
-    .fetch<StoreQuoteResponse>(`/store/quotes`, {
+    .fetch<StoreQuoteResponse & { guest_id?: string }>(`/store/quotes`, { // Expect guest_id in response type
       method: "POST",
       body: { cart_id: cartId },
       headers,
     })
-    .then((quote) => {
+    .then(async (response) => {
       track("quote_created", {
-        quote_id: quote.quote.id,
+        quote_id: response.quote.id,
       })
 
-      return quote
+      // If guest_id is returned, store it
+      if (response.guest_id) {
+        await setGuestId(response.guest_id);
+      }
+
+      return response
     })
 }
 
@@ -64,14 +81,19 @@ export const fetchQuote = async (id: string, query?: QuoteFilterParams) => {
     ...(await getAuthHeaders()),
   }
 
+  // If guest, add guest_id query parameter
+  const auth = await getAuthHeaders();
+  const guestId = await getGuestId();
+  const guestQueryParam = !auth.hasOwnProperty('authorization') && guestId ? `&guest_id=${guestId}` : '';
+
   const next = {
     ...(await getCacheOptions(["quote", id].join("-"))),
   }
 
-  return sdk.client.fetch<StoreQuoteResponse>(`/store/quotes/${id}`, {
+  return sdk.client.fetch<StoreQuoteResponse>(`/store/quotes/${id}?${guestQueryParam.substring(1)}`, { // Append guest_id if present
     method: "GET",
     query,
-    headers,
+    headers: { ...headers }, // Ensure headers is an object
     next,
   })
 }
@@ -84,14 +106,19 @@ export const fetchQuotePreview = async (
     ...(await getAuthHeaders()),
   }
 
+  // If guest, add guest_id query parameter
+  const auth = await getAuthHeaders();
+  const guestId = await getGuestId();
+  const guestQueryParam = !auth.hasOwnProperty('authorization') && guestId ? `&guest_id=${guestId}` : '';
+
   const next = {
     ...(await getCacheOptions(["quotePreview", id].join("-"))),
   }
 
   return sdk.client.fetch<StoreQuotePreviewResponse>(
-    `/store/quotes/${id}/preview`,
+    `/store/quotes/${id}/preview?${guestQueryParam.substring(1)}`, // Append guest_id if present
     {
-      method: "GET",
+      method: "GET", // Preview might still require auth, adjust if needed
       query,
       headers,
       next,
@@ -102,6 +129,11 @@ export const fetchQuotePreview = async (
 export const acceptQuote = async (id: string) => {
   const headers = {
     ...(await getAuthHeaders()),
+  }
+
+  // Ensure user is authenticated to accept
+  if (!headers.hasOwnProperty('authorization')) {
+    throw new Error("Authentication required to accept a quote.");
   }
 
   return sdk.client
@@ -133,6 +165,11 @@ export const rejectQuote = async (id: string) => {
     ...(await getAuthHeaders()),
   }
 
+  // Ensure user is authenticated to reject
+  if (!headers.hasOwnProperty('authorization')) {
+    throw new Error("Authentication required to reject a quote.");
+  }
+
   return sdk.client
     .fetch<StoreQuoteResponse>(`/store/quotes/${id}/reject`, {
       method: "POST",
@@ -156,6 +193,11 @@ export const createQuoteMessage = async (
 ) => {
   const headers = {
     ...(await getAuthHeaders()),
+  }
+
+  // Ensure user is authenticated to send messages
+  if (!headers.hasOwnProperty('authorization')) {
+    throw new Error("Authentication required to send quote messages.");
   }
 
   return sdk.client

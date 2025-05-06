@@ -17,15 +17,23 @@ import {
 } from "./validators";
 
 export const storeQuotesMiddlewares: MiddlewareRoute[] = [
+  // Apply optional authentication globally first for simplicity,
+  // or apply specifically to routes needing it.
+  // Applying globally might be easier to manage initially.
   {
     method: "ALL",
     matcher: "/store/quotes*",
-    middlewares: [authenticate("customer", ["session", "bearer"])],
+    middlewares: [
+      authenticate("customer", ["session", "bearer"], {
+        allowUnauthenticated: true, // Allow unauthenticated access
+      }),
+    ],
   },
   {
     method: ["GET"],
     matcher: "/store/quotes",
     middlewares: [
+      // Authentication is already handled above
       validateAndTransformQuery(GetQuoteParams, listQuotesTransformQueryConfig),
     ],
   },
@@ -33,10 +41,11 @@ export const storeQuotesMiddlewares: MiddlewareRoute[] = [
     method: ["POST"],
     matcher: "/store/quotes",
     middlewares: [
+      // Authentication is already handled above
       validateAndTransformBody(CreateQuote),
       validateAndTransformQuery(
-        GetQuoteParams,
-        retrieveQuoteTransformQueryConfig
+        GetQuoteParams, // Keep this? Maybe not needed for POST response. Check queryConfig usage.
+        retrieveQuoteTransformQueryConfig // Use retrieve config for response shaping
       ),
     ],
   },
@@ -44,6 +53,7 @@ export const storeQuotesMiddlewares: MiddlewareRoute[] = [
     method: ["GET"],
     matcher: "/store/quotes/:id",
     middlewares: [
+      // Authentication is already handled above
       validateAndTransformQuery(
         GetQuoteParams,
         retrieveQuoteTransformQueryConfig
@@ -54,6 +64,9 @@ export const storeQuotesMiddlewares: MiddlewareRoute[] = [
     method: ["POST"],
     matcher: "/store/quotes/:id/accept",
     middlewares: [
+      // Requires authentication - keep specific auth or rely on global?
+      // If relying on global optional auth, ensure logic inside route checks for auth_context
+      authenticate("customer", ["session", "bearer"]), // Keep strict auth here
       validateAndTransformBody(AcceptQuote),
       validateAndTransformQuery(
         GetQuoteParams,
@@ -65,6 +78,8 @@ export const storeQuotesMiddlewares: MiddlewareRoute[] = [
     method: ["POST"],
     matcher: "/store/quotes/:id/reject",
     middlewares: [
+      // Requires authentication
+      authenticate("customer", ["session", "bearer"]), // Keep strict auth here
       validateAndTransformBody(RejectQuote),
       validateAndTransformQuery(
         GetQuoteParams,
@@ -76,6 +91,8 @@ export const storeQuotesMiddlewares: MiddlewareRoute[] = [
     method: ["GET"],
     matcher: "/store/quotes/:id/preview",
     middlewares: [
+      // Requires authentication? Assume yes for now.
+      authenticate("customer", ["session", "bearer"]), // Keep strict auth here
       validateAndTransformQuery(
         GetQuoteParams,
         retrieveQuoteTransformQueryConfig
@@ -86,6 +103,8 @@ export const storeQuotesMiddlewares: MiddlewareRoute[] = [
     method: ["POST"],
     matcher: "/store/quotes/:id/messages",
     middlewares: [
+      // Requires authentication
+      authenticate("customer", ["session", "bearer"]), // Keep strict auth here
       validateAndTransformBody(StoreCreateQuoteMessage),
       validateAndTransformQuery(
         GetQuoteParams,

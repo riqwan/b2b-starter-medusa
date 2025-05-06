@@ -21,8 +21,10 @@ export const GetQuoteParams = createFindParams({
       status: z
         .union([z.string(), z.array(z.string()), createOperatorMap()])
         .optional(),
+      guest_id: z.string().optional(), // Add guest_id as optional query param
       created_at: createOperatorMap().optional(),
       updated_at: createOperatorMap().optional(),
+      // customer_id filter should likely be handled internally based on auth, not exposed here
     })
   )
   .strict();
@@ -31,6 +33,8 @@ export type CreateQuoteType = z.infer<typeof CreateQuote>;
 export const CreateQuote = z
   .object({
     cart_id: z.string().min(1),
+    // Add email if we decide guests must provide it explicitly here
+    // email: z.string().email().optional(),
   })
   .strict();
 

@@ -9,7 +9,7 @@ import Button from "@/modules/common/components/button"
 import Divider from "@/modules/common/components/divider"
 import LocalizedClientLink from "@/modules/common/components/localized-client-link"
 import { RequestQuoteConfirmation } from "@/modules/quotes/components/request-quote-confirmation"
-import { RequestQuotePrompt } from "@/modules/quotes/components/request-quote-prompt"
+// import { RequestQuotePrompt } from "@/modules/quotes/components/request-quote-prompt" // Remove this import
 import { B2BCustomer } from "@/types"
 import { ApprovalStatusType } from "@/types/approval"
 import { ExclamationCircle } from "@medusajs/icons"
@@ -67,28 +67,18 @@ const Summary = ({ customer, spendLimitExceeded }: SummaryProps) => {
             : "Log in to Checkout"}
         </Button>
       </LocalizedClientLink>
-      {!!customer && (
-        <RequestQuoteConfirmation>
-          <Button
-            className="w-full h-10 rounded-full shadow-borders-base"
-            variant="secondary"
-            disabled={isPendingApproval}
-          >
-            Request Quote
-          </Button>
-        </RequestQuoteConfirmation>
-      )}
-      {!customer && (
-        <RequestQuotePrompt>
-          <Button
-            className="w-full h-10 rounded-full shadow-borders-base"
-            variant="secondary"
-            disabled={isPendingApproval}
-          >
-            Request Quote
-          </Button>
-        </RequestQuotePrompt>
-      )}
+      {/* Use RequestQuoteConfirmation for both guests and logged-in users */}
+      {/* The component internally handles email check for guests */}
+      <RequestQuoteConfirmation>
+        <Button
+          className="w-full h-10 rounded-full shadow-borders-base"
+          variant="secondary"
+          disabled={isPendingApproval}
+          data-testid="request-quote-button" // Add test id
+        >
+          Request Quote
+        </Button>
+      </RequestQuoteConfirmation>
       <CartToCsvButton cart={cart} />
       <Button
         onClick={handleEmptyCart}

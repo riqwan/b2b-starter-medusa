@@ -16,6 +16,7 @@ export interface ModuleQuoteFilters extends BaseFilterable<ModuleQuoteFilters> {
   q?: string;
   id?: string | string[];
   status?: string | string[];
+  guest_id?: string | string[]; // Add guest_id filter
 }
 
 /**
@@ -24,12 +25,12 @@ export interface ModuleQuoteFilters extends BaseFilterable<ModuleQuoteFilters> {
 export interface IQuoteModuleService extends IModuleService {
   /* Entity: Quotes */
   createQuotes(
-    data: ModuleCreateQuote,
+    data: ModuleCreateQuote | (ModuleCreateQuote & { guest_id?: string | null }), // Allow guest_id during creation
     sharedContext?: Context
   ): Promise<ModuleQuote>;
 
   createQuotes(
-    data: ModuleCreateQuote[],
+    data: (ModuleCreateQuote | (ModuleCreateQuote & { guest_id?: string | null }))[], // Allow guest_id during creation
     sharedContext?: Context
   ): Promise<ModuleQuote[]>;
 

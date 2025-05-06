@@ -1,6 +1,7 @@
 import {
   beginOrderEditOrderWorkflow,
   createOrdersWorkflow,
+  CreateOrderWorkflowInput, // Import the input type
   useRemoteQueryStep,
 } from "@medusajs/core-flows";
 import { OrderStatus } from "@medusajs/framework/utils";
@@ -23,7 +24,13 @@ import { createQuotesWorkflow } from "./create-quote";
 */
 export const createRequestForQuoteWorkflow = createWorkflow(
   "create-request-for-quote",
-  function (input: { cart_id: string; customer_id: string }) {
+  // Update input type
+  function (input: {
+    cart_id: string;
+    customer_id?: string; // Make customer_id optional
+    guest_id?: string;    // Add optional guest_id
+    email?: string;       // Add optional email for guests
+  }) {
     const cart = useRemoteQueryStep({
       entry_point: "cart",
       fields: [
@@ -44,21 +51,27 @@ export const createRequestForQuoteWorkflow = createWorkflow(
       throw_if_key_not_found: true,
     });
 
-    const customer = useRemoteQueryStep({
-      entry_point: "customer",
-      fields: ["id", "customer"],
-      variables: { id: input.customer_id },
-      list: false,
-      throw_if_key_not_found: true,
-    }).config({ name: "customer-query" });
+    // Only query customer if customer_id is provided
+    let customer: any = undefined;
+    if (input.customer_id) {
+      customer = useRemoteQueryStep({
+        entry_point: "customer",
+        fields: ["id", "email"], // Only need email if not provided in input
+        variables: { id: input.customer_id },
+        list: false,
+        throw_if_key_not_found: true,
+      }).config({ name: "customer-query" });
+    }
 
-    const orderInput = transform({ cart, customer }, ({ cart, customer }) => {
+    const orderInput = transform({ cart, customer, input }, ({ cart, customer, input }) => {
       return {
         is_draft_order: true,
         status: OrderStatus.DRAFT,
         sales_channel_id: cart.sales_channel_id,
-        email: customer.email,
-        customer_id: customer.id,
+        // Use input email for guests, customer email otherwise
+        email: input.customer_id ? customer.email : input.email,
+        // Use input customer_id if available
+        customer_id: input.customer_id,
         billing_address: cart.billing_address,
         shipping_address: cart.shipping_address,
         items: cart.items,
@@ -66,7 +79,7 @@ export const createRequestForQuoteWorkflow = createWorkflow(
         promo_codes: cart.promotions.map(({ code }) => code),
         currency_code: cart.currency_code,
         shipping_methods: cart.shipping_methods,
-      };
+      } as CreateOrderWorkflowInput; // Cast to the correct type
     });
 
     const draftOrder = createOrdersWorkflow.runAsStep({
@@ -86,14 +99,17 @@ export const createRequestForQuoteWorkflow = createWorkflow(
       input: orderEditInput,
     });
 
+    const quoteInput = transform({ draftOrder, cart, input, changeOrder }, ({ draftOrder, cart, input, changeOrder }) => ({
+      draft_order_id: draftOrder.id,
+      cart_id: cart.id,
+      customer_id: input.customer_id, // Pass customer_id if exists
+      guest_id: input.guest_id,       // Pass guest_id if exists
+      order_change_id: changeOrder.id,
+    }));
+
     const quotes = createQuotesWorkflow.runAsStep({
       input: [
-        {
-          draft_order_id: draftOrder.id,
-          cart_id: cart.id,
-          customer_id: customer.id,
-          order_change_id: changeOrder.id,
-        },
+        quoteInput
       ],
     });
 
